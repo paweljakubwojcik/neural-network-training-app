@@ -1,15 +1,18 @@
-import styled from 'styled-components'
-import { Card, Button } from '@material-ui/core'
+import { Button, IconButton } from '@material-ui/core'
+import SettingsIcon from '@material-ui/icons/Settings'
+import StyledCard from '../components/StyledCard'
 import { Container, Column } from '../components/Layout'
 
 import Chart from '../components/Chart'
 import { useContext } from 'react'
 import { TensorflowContext } from '../context/Tensorflow'
+import LayersControls from '../components/LayersControls'
 
 const pointData = { datasets: [{ data: [{ x: 1, y: 1 }] }] }
 
 export default function Main() {
-    const { trainModel, trainingLogs } = useContext(TensorflowContext)
+    const { trainModel, stopTraining, compileModel, trainingLogs, isCompiled, isTraining } =
+        useContext(TensorflowContext)
     console.log(trainingLogs)
 
     return (
@@ -19,12 +22,22 @@ export default function Main() {
                 <StyledCard>
                     <StyledCard.Header>
                         <h2>Network structure</h2>
+                        <IconButton size="small" color="inherit">
+                            <SettingsIcon />
+                        </IconButton>
                     </StyledCard.Header>
-                </StyledCard>
-                <StyledCard>
+                    <LayersControls />
                     <StyledCard.Header>
-                        <h2>Network options</h2>
+                        <h2>Model options</h2>
                     </StyledCard.Header>
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={compileModel}
+                        disabled={isCompiled}
+                    >
+                        {isCompiled ? 'Compiled' : 'Compile model'}
+                    </Button>
                 </StyledCard>
             </Column>
             <Column>
@@ -38,8 +51,13 @@ export default function Main() {
                         options={{ animation: false }}
                         title={'Learning curve'}
                     />
-                    <Button variant="contained" color="primary" onClick={trainModel}>
-                        Train
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={isTraining ? stopTraining : trainModel}
+                        disabled={!isCompiled}
+                    >
+                        {isTraining ? 'stop' : 'Train'}
                     </Button>
                 </StyledCard>
             </Column>
@@ -50,22 +68,16 @@ export default function Main() {
                         <h2>Effects</h2>
                     </StyledCard.Header>
                     <Chart data={pointData} title={'Evaluation Chart'} />
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => {}}
+                        disabled={!isCompiled}
+                    >
+                        Evaulate
+                    </Button>
                 </StyledCard>
             </Column>
         </Container>
     )
 }
-
-const StyledCard = styled(Card)`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 1em;
-    margin: 0.4em;
-    width: 500px;
-`
-
-StyledCard.Header = styled.header`
-    display: flex;
-    width: 100%;
-`

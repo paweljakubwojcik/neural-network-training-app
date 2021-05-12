@@ -11,7 +11,8 @@ interface ChartProps {
     data: ChartData
     options: ChartOptions
     type?: ChartType
-    title: string
+    title?: string
+    id?: string
 }
 
 /**
@@ -24,6 +25,7 @@ export default function ChartComponent({
     options,
     type = 'scatter',
     title,
+    id,
     ...props
 }: ChartProps) {
     const chartInstance = useRef<Chart>({
@@ -54,8 +56,8 @@ export default function ChartComponent({
 
     return (
         <Container {...props}>
-            <h3>{title}</h3>
-            <canvas ref={canvasRef} id={title}></canvas>
+            {title && <h3>{title}</h3>}
+            <canvas ref={canvasRef} id={id} width={500}></canvas>
         </Container>
     )
 }

@@ -13,6 +13,7 @@ export const GlobalStyles = createGlobalStyle`
     html {
         /* CSS variables */
         --background-color:#FAFAFA;
+        --secondary-font-color: #414141;
         --font-color:#1E1E1E;
     }
 
