@@ -7,6 +7,7 @@ import Chart from '../components/Chart'
 import { useContext } from 'react'
 import { TensorflowContext } from '../context/Tensorflow'
 import LayersControls from '../components/LayersControls'
+import NetworkDiagram from '../components/NetworkDiagram'
 
 const pointData = { datasets: [{ data: [{ x: 1, y: 1 }] }] }
 
@@ -26,6 +27,7 @@ export default function Main() {
                             <SettingsIcon />
                         </IconButton>
                     </StyledCard.Header>
+                    <NetworkDiagram />
                     <LayersControls />
                     <StyledCard.Header>
                         <h2>Model options</h2>

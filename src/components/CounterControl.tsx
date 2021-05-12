@@ -7,11 +7,12 @@ interface CounterControlProps {
     up: () => void
     down: () => void
     count: number
+    styles?: object
 }
 
-export default function CounterControl({ up, down, count }: CounterControlProps) {
+export default function CounterControl({ up, down, count, styles, ...props }: CounterControlProps) {
     return (
-        <div style={{ display: 'flex' }}>
+        <div style={{ display: 'flex', ...styles }}>
             <IconButton onClick={up} size="small">
                 <AddIcon fontSize="inherit" />
             </IconButton>

@@ -3,22 +3,28 @@ import * as tf from '@tensorflow/tfjs'
 
 import { trainX, trainY } from '../util/MockData'
 
+const MIN_UNITS = 1
+const MAX_UNITS = 8
+
 const initialModelSettings = {
     layers: [
         {
             name: 'Input Layer',
             units: 1,
             activationFunc: 'linear',
+            adjustable: false,
         },
         {
             name: 'Hidden Layer 1',
             units: 2,
             activationFunc: 'linear',
+            adjustable: true,
         },
         {
             name: 'Output Layer',
             units: 1,
             activationFunc: 'linear',
+            adjustable: true,
         },
     ],
     optimazer: tf.train.sgd,
@@ -65,6 +71,7 @@ function TensorflowProvider({ children, ...props }) {
             const layerToIncrementIndex = settings.layers.findIndex(
                 (layer) => layer.name === layerName
             )
+            if (settings.layers[layerToIncrementIndex].units >= MAX_UNITS) return settings
             settings.layers[layerToIncrementIndex].units++
             return { ...settings }
         })
@@ -75,6 +82,7 @@ function TensorflowProvider({ children, ...props }) {
             const layerToIncrementIndex = settings.layers.findIndex(
                 (layer) => layer.name === layerName
             )
+            if (settings.layers[layerToIncrementIndex].units <= MIN_UNITS) return settings
             settings.layers[layerToIncrementIndex].units--
             return { ...settings }
         })
@@ -86,6 +94,7 @@ function TensorflowProvider({ children, ...props }) {
                 name: `Hidden Layer ${settings.layers.length - 1}`,
                 units: 1,
                 activationFunc: 'linear',
+                adjustable: true,
             })
             return { ...settings }
         })
@@ -97,6 +106,14 @@ function TensorflowProvider({ children, ...props }) {
             return { ...settings }
         })
     }, [])
+
+    const setActivationFunction = (layerName, newValue) => {
+        setModelSettings((settings) => {
+            const layerToChange = settings.layers.findIndex((layer) => layer.name === layerName)
+            settings.layers[layerToChange].activationFunc = newValue
+            return { ...settings }
+        })
+    }
 
     const compileModel = useCallback(async () => {
         const { layers, optimazer, optimazerOptions, loss } = modelSettings
@@ -164,6 +181,7 @@ function TensorflowProvider({ children, ...props }) {
                 decrementLayerUnits,
                 addLayer,
                 removeLayer,
+                setActivationFunction,
                 modelSettings,
             }}
             {...props}

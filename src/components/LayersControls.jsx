@@ -1,10 +1,12 @@
 import { useContext } from 'react'
 import styled from 'styled-components'
-import { Card, Button } from '@material-ui/core'
+import { Card, Button, Select, MenuItem, FormControl, InputLabel } from '@material-ui/core'
 import AddBoxIcon from '@material-ui/icons/AddBox'
 import RemoveCircleIcon from '@material-ui/icons/RemoveCircle'
 import CounterControl from './CounterControl'
 import { TensorflowContext } from '../context/Tensorflow'
+
+const activationFunctions = ['linear', 'relu']
 
 export default function LayersControls() {
     const {
@@ -12,17 +14,29 @@ export default function LayersControls() {
         incrementLayerUnits,
         decrementLayerUnits,
         addLayer,
+        setActivationFunction,
         removeLayer,
     } = useContext(TensorflowContext)
 
     const LayersControls = layers.map((layer, i) => (
         <LayerControl key={i}>
             <div style={{ marginRight: 'auto' }}>{layer.name}</div>
-            <CounterControl
-                count={layer.units}
-                up={() => incrementLayerUnits(layer.name)}
-                down={() => decrementLayerUnits(layer.name)}
-            />
+            <Select
+                labelId={`${layer.name} activation function`}
+                value={layer.activationFunc}
+                onChange={(e) => setActivationFunction(layer.name, e.target.value)}
+            >
+                {activationFunctions.map((func) => (
+                    <MenuItem value={func}>{func}</MenuItem>
+                ))}
+            </Select>
+            {layer.adjustable && (
+                <CounterControl
+                    count={layer.units}
+                    up={() => incrementLayerUnits(layer.name)}
+                    down={() => decrementLayerUnits(layer.name)}
+                />
+            )}
         </LayerControl>
     ))
 
@@ -59,6 +73,7 @@ const Title = styled.h3`
 
 const LayerControl = styled(Card)`
     display: flex;
+    align-items: center;
     width: 100%;
     margin: 0.3em;
     padding: 0.3em;
