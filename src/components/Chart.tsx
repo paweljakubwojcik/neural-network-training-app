@@ -1,14 +1,17 @@
-import { useState, useCallback, useEffect } from 'react'
-import { Chart, registerables } from 'chart.js'
+import { useRef, useCallback, useEffect } from 'react'
+import styled from 'styled-components'
 
+import { Chart, registerables } from 'chart.js'
 import type { ChartOptions, ChartData, ChartType, ScatterDataPoint } from 'chart.js'
 
 Chart.register(...registerables)
 
+//TODO: add styling to improve responsivness
 interface ChartProps {
     data: ChartData
     options: ChartOptions
     type?: ChartType
+    title: string
 }
 
 /**
@@ -16,32 +19,50 @@ interface ChartProps {
  *
  * default chart type is "scatter"
  */
-export default function ChartComponent({ data, options, type = 'scatter', ...props }: ChartProps) {
-    const [chart, setChart] = useState<Chart>({
+export default function ChartComponent({
+    data,
+    options,
+    type = 'scatter',
+    title,
+    ...props
+}: ChartProps) {
+    const chartInstance = useRef<Chart>({
         update: () => {},
         destroy: () => {},
     } as Chart)
 
     useEffect(() => {
-        chart.data = data
-        chart.options = options
-
-        chart.update('normal')
+        chartInstance.current.data = data
+        chartInstance.current.options = options
+        chartInstance.current.update('normal')
     }, [data, options])
 
-    const canvasRef = useCallback<(instance: HTMLCanvasElement | null) => void>((reference) => {
-        chart.destroy()
+    const canvasRef = useCallback<(instance: HTMLCanvasElement | null) => void>(
+        (reference) => {
+            chartInstance.current.destroy()
 
-        if (reference) {
-            setChart(
-                new Chart(reference, {
+            if (reference) {
+                chartInstance.current = new Chart(reference, {
                     type,
                     data,
                     options,
                 })
-            )
-        }
-    }, [])
+            }
+        },
+        [data, options, type]
+    )
 
-    return <canvas ref={canvasRef} {...props}></canvas>
+    return (
+        <Container {...props}>
+            <h3>{title}</h3>
+            <canvas ref={canvasRef} id={title}></canvas>
+        </Container>
+    )
 }
+
+const Container = styled.div`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0.5em;
+`
