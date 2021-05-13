@@ -1,6 +1,6 @@
 import { useContext } from 'react'
 import styled from 'styled-components'
-import { Card, Button, Select, MenuItem, FormControl, InputLabel } from '@material-ui/core'
+import { Card, Button, Select, MenuItem } from '@material-ui/core'
 import AddBoxIcon from '@material-ui/icons/AddBox'
 import RemoveCircleIcon from '@material-ui/icons/RemoveCircle'
 import CounterControl from './CounterControl'
@@ -27,7 +27,9 @@ export default function LayersControls() {
                 onChange={(e) => setActivationFunction(layer.name, e.target.value)}
             >
                 {activationFunctions.map((func) => (
-                    <MenuItem value={func}>{func}</MenuItem>
+                    <MenuItem value={func} key={func}>
+                        {func}
+                    </MenuItem>
                 ))}
             </Select>
             {layer.adjustable && (

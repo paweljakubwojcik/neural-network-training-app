@@ -60,7 +60,7 @@ const TensorflowContext = createContext({
 })
 
 function TensorflowProvider({ children, ...props }) {
-    const [{ trainingLogs }, setState] = useState(initialState) // FIXME: this doesn't make sense now,
+    const [trainingLogs, setTrainingLogs] = useState([]) // FIXME: this doesn't make sense now,
 
     const { current: model } = useRef(tf.sequential())
     const [isCompiled, setCompiled] = useState(false)
@@ -69,6 +69,7 @@ function TensorflowProvider({ children, ...props }) {
     // possibly change it to hook
     const [modelSettings, dispatch] = useReducer(ModelSettingsReducer, initialModelSettings)
 
+    // when any setting is change model needs to be compiled again
     useEffect(() => {
         setCompiled(false)
     }, [modelSettings])
@@ -95,6 +96,7 @@ function TensorflowProvider({ children, ...props }) {
 
     const compileModel = useCallback(async () => {
         const { layers, optimazer, optimazerOptions, loss } = modelSettings
+        setTrainingLogs([])
 
         layers.forEach(({ units, activation }, index) => {
             model.add(
@@ -121,17 +123,13 @@ function TensorflowProvider({ children, ...props }) {
         await model.fit(tf.tensor(trainX), tf.tensor(trainY), {
             batchSize: 32,
             epochs: 100,
+            initialEpoch: trainingLogs.length,
             shuffle: true,
             validationSplit: 0.1,
             callbacks: {
                 onEpochEnd: async (epoch, logs) => {
-                    setState((prev) => ({
-                        ...prev,
-                        trainingLogs: [
-                            ...prev.trainingLogs,
-                            { x: epoch, y: logs[modelSettings.loss] },
-                        ],
-                    }))
+                    setTrainingLogs((prev) => [...prev, { x: epoch, y: logs[modelSettings.loss] }])
+                    // when fullfilling the training goal
                     /* if (epoch === 2) {
                         model.stopTraining = true
                     } */
@@ -139,7 +137,7 @@ function TensorflowProvider({ children, ...props }) {
             },
         })
         setTraining(false)
-    }, [model, modelSettings.loss])
+    }, [model, modelSettings.loss, trainingLogs.length])
 
     const stopTraining = useCallback(() => {
         model.stopTraining = true
