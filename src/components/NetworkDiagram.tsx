@@ -1,42 +1,53 @@
-import { useContext } from 'react'
 import styled from 'styled-components'
-import { TensorflowContext } from '../context/Tensorflow'
 
 const WIDTH = 300
 const HEIGHT = 200
 
-export default function NetworkDiagram({ ...props }) {
-    const {
-        modelSettings: { layers },
-    } = useContext(TensorflowContext)
+interface NetworkDiagramProps {
+    layers: [number]
+}
 
-    const nodes = layers.map(({ units }, j) => {
+type Point = {
+    x: number
+    y: number
+}
+
+/**
+ * Component to visualize structure of a neural network
+ * prop layers is an array of numbers where every number represents number of nodes in the leyer
+ * @example layers = [1,2,1]
+ */
+export default function NetworkDiagram({ layers, ...props }: NetworkDiagramProps) {
+    const nodes: Point[][] = layers.map((numberOfNodes, j) => {
         const step_x = WIDTH / (layers.length + 1)
-        return new Array(units).fill(0).map((zero, i) => {
-            const step_y = HEIGHT / (units + 1)
+        return new Array(numberOfNodes).fill(0).map((zero, i) => {
+            const step_y = HEIGHT / (numberOfNodes + 1)
             return { y: step_y * (i + 1), x: step_x * (j + 1) }
         })
     })
 
-    const lines = nodes
+    const lines: { start: Point; end: Point }[] = nodes
         .map((node, i) => {
-            if (i === 0) return null
+            if (i === 0) return []
             const current = node
             const prev = nodes[i - 1]
-            let linesGr = []
+            let lines: { start: Point; end: Point }[] = []
             current.forEach(({ x: x1, y: y1 }) => {
                 prev.forEach(({ x: x2, y: y2 }) => {
-                    linesGr.push({ x1, y1, x2, y2 })
+                    lines.push({
+                        start: { x: x1, y: y1 },
+                        end: { x: x2, y: y2 },
+                    })
                 })
             })
-            return linesGr
+            return lines
         })
-        .reduce((prev, curr) => (prev ? [...prev, ...curr] : curr))
+        .reduce((prev, curr) => (prev ? [...prev, ...curr] : curr), [])
 
     return (
         <Container {...props}>
             <svg style={{ width: '100%', height: '100%', position: 'absolute', zIndex: 0 }}>
-                {lines.map(({ x1, y1, x2, y2 }, i) => (
+                {lines.map(({ start: { x: x1, y: y1 }, end: { x: x2, y: y2 } }, i) => (
                     <Line x1={x1} y1={y1} x2={x2} y2={y2} key={i} />
                 ))}
             </svg>
