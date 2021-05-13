@@ -8,8 +8,8 @@ import { useContext } from 'react'
 import { TensorflowContext } from '../context/Tensorflow'
 import LayersControls from '../components/LayersControls'
 import NetworkDiagram from '../components/NetworkDiagram'
-
-const pointData = { datasets: [{ data: [{ x: 1, y: 1 }] }] }
+import useChartData from '../hooks/useChartData'
+import { DataContext } from '../context/Data'
 
 export default function Main() {
     const {
@@ -19,9 +19,26 @@ export default function Main() {
         trainingLogs,
         isCompiled,
         isTraining,
-        modelSettings: { layers },
+        modelSettings: { layers, loss },
     } = useContext(TensorflowContext)
-    console.log(trainingLogs)
+
+    const { test: testData, learning: learningData } = useContext(DataContext)
+
+    const pointData = useChartData({
+        datasets: [{ data: learningData, label: 'Learning data' }],
+    })
+
+    const trainingData = useChartData({
+        datasets: [
+            {
+                data: trainingLogs,
+                label: loss,
+                pointBackgroundColor: 'blue',
+                backgroundColor: 'blue',
+                showLine: true,
+            },
+        ],
+    })
 
     return (
         <Container>
@@ -56,7 +73,7 @@ export default function Main() {
                         <h2>Learning curve</h2>
                     </StyledCard.Header>
                     <Chart
-                        data={{ datasets: [{ data: trainingLogs }] }}
+                        data={trainingData}
                         options={{ animation: false }}
                         title={'Learning curve'}
                     />

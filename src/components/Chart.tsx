@@ -2,7 +2,7 @@ import { useRef, useCallback, useEffect } from 'react'
 import styled from 'styled-components'
 
 import { Chart, registerables } from 'chart.js'
-import type { ChartOptions, ChartData, ChartType, ScatterDataPoint } from 'chart.js'
+import type { ChartOptions, ChartData, ChartType } from 'chart.js'
 
 Chart.register(...registerables)
 
