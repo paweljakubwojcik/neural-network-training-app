@@ -12,8 +12,15 @@ import NetworkDiagram from '../components/NetworkDiagram'
 const pointData = { datasets: [{ data: [{ x: 1, y: 1 }] }] }
 
 export default function Main() {
-    const { trainModel, stopTraining, compileModel, trainingLogs, isCompiled, isTraining } =
-        useContext(TensorflowContext)
+    const {
+        trainModel,
+        stopTraining,
+        compileModel,
+        trainingLogs,
+        isCompiled,
+        isTraining,
+        modelSettings: { layers },
+    } = useContext(TensorflowContext)
     console.log(trainingLogs)
 
     return (
@@ -27,7 +34,7 @@ export default function Main() {
                             <SettingsIcon />
                         </IconButton>
                     </StyledCard.Header>
-                    <NetworkDiagram />
+                    <NetworkDiagram layers={layers.map((layer) => layer.units)} />
                     <LayersControls />
                     <StyledCard.Header>
                         <h2>Model options</h2>
