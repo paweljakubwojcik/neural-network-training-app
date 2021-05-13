@@ -1,10 +1,15 @@
-import React, { createContext, useCallback, useEffect, useRef, useState } from 'react'
+import React, { createContext, useCallback, useEffect, useReducer, useRef, useState } from 'react'
 import * as tf from '@tensorflow/tfjs'
 
 import { trainX, trainY } from '../util/MockData'
-
-const MIN_UNITS = 1
-const MAX_UNITS = 8
+import { ModelSettingsReducer } from './reducers/ModelSetting'
+import {
+    ADD_LAYER,
+    DECREMENT_LAYER_UNITS,
+    INCREMENT_LAYER_UNITS,
+    REMOVE_LAYER,
+    SET_ACTIVATION_FUNCTION,
+} from './actions/ModelSettings'
 
 const initialModelSettings = {
     layers: [
@@ -60,59 +65,32 @@ function TensorflowProvider({ children, ...props }) {
     const { current: model } = useRef(tf.sequential())
     const [isCompiled, setCompiled] = useState(false)
     const [isTraining, setTraining] = useState(false)
-    const [modelSettings, setModelSettings] = useState(initialModelSettings)
+
+    // possibly change it to hook
+    const [modelSettings, dispatch] = useReducer(ModelSettingsReducer, initialModelSettings)
 
     useEffect(() => {
         setCompiled(false)
     }, [modelSettings])
 
     const incrementLayerUnits = useCallback((layerName) => {
-        setModelSettings((settings) => {
-            const layerToIncrementIndex = settings.layers.findIndex(
-                (layer) => layer.name === layerName
-            )
-            if (settings.layers[layerToIncrementIndex].units >= MAX_UNITS) return settings
-            settings.layers[layerToIncrementIndex].units++
-            return { ...settings }
-        })
+        dispatch({ type: INCREMENT_LAYER_UNITS, payload: { layerName } })
     }, [])
 
     const decrementLayerUnits = useCallback((layerName) => {
-        setModelSettings((settings) => {
-            const layerToIncrementIndex = settings.layers.findIndex(
-                (layer) => layer.name === layerName
-            )
-            if (settings.layers[layerToIncrementIndex].units <= MIN_UNITS) return settings
-            settings.layers[layerToIncrementIndex].units--
-            return { ...settings }
-        })
+        dispatch({ type: DECREMENT_LAYER_UNITS, payload: { layerName } })
     }, [])
 
     const addLayer = useCallback(() => {
-        setModelSettings((settings) => {
-            settings.layers.splice(-1, 0, {
-                name: `Hidden Layer ${settings.layers.length - 1}`,
-                units: 1,
-                activationFunc: 'linear',
-                adjustable: true,
-            })
-            return { ...settings }
-        })
+        dispatch({ type: ADD_LAYER })
     }, [])
 
     const removeLayer = useCallback(() => {
-        setModelSettings((settings) => {
-            settings.layers.splice(-2, 1)
-            return { ...settings }
-        })
+        dispatch({ type: REMOVE_LAYER })
     }, [])
 
     const setActivationFunction = (layerName, newValue) => {
-        setModelSettings((settings) => {
-            const layerToChange = settings.layers.findIndex((layer) => layer.name === layerName)
-            settings.layers[layerToChange].activationFunc = newValue
-            return { ...settings }
-        })
+        dispatch({ type: SET_ACTIVATION_FUNCTION, payload: { layerName, newValue } })
     }
 
     const compileModel = useCallback(async () => {
@@ -134,7 +112,8 @@ function TensorflowProvider({ children, ...props }) {
             metrics: [tf.metrics[loss]],
         })
         setCompiled(true)
-        console.log(model.summary())
+        console.log('%cModel compiled succesfully', 'font-weight: bold; font-size: 16px;')
+        model.summary()
     }, [model, modelSettings])
 
     const trainModel = useCallback(async () => {
