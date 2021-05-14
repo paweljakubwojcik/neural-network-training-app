@@ -8,11 +8,7 @@ import {
     SET_ACTIVATION_FUNCTION,
 } from '../actions/ModelSettings'
 
-const MIN_UNITS = 1
-const MAX_UNITS = 8
-
-const MAX_LAYERS = 5
-const MIN_LAYERS = 2
+import { MIN_UNITS, MAX_UNITS, MAX_LAYERS, MIN_LAYERS } from '../../constants'
 
 export const ModelSettingsReducer: Reducer<ModelSettings, ReducerAction> = (
     state,

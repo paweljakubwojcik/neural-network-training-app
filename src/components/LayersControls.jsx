@@ -6,6 +6,8 @@ import RemoveCircleIcon from '@material-ui/icons/RemoveCircle'
 import CounterControl from './CounterControl'
 import { TensorflowContext } from '../context/Tensorflow'
 
+import { MIN_UNITS, MAX_UNITS, MAX_LAYERS, MIN_LAYERS } from '../constants'
+
 const activationFunctions = ['linear', 'relu']
 
 export default function LayersControls() {
@@ -37,6 +39,8 @@ export default function LayersControls() {
                     count={layer.units}
                     up={() => incrementLayerUnits(layer.name)}
                     down={() => decrementLayerUnits(layer.name)}
+                    max={MAX_UNITS}
+                    min={MIN_UNITS}
                 />
             )}
         </LayerControl>
@@ -47,10 +51,18 @@ export default function LayersControls() {
             <Title>Layers: </Title>
             {LayersControls.slice(0, -1)}
             <div style={{ display: 'flex', justifyContent: 'space-evenly' }}>
-                <Button startIcon={<AddBoxIcon />} onClick={addLayer}>
+                <Button
+                    startIcon={<AddBoxIcon />}
+                    onClick={addLayer}
+                    disabled={layers.length >= MAX_LAYERS}
+                >
                     Add Layer
                 </Button>
-                <Button startIcon={<RemoveCircleIcon />} onClick={removeLayer}>
+                <Button
+                    startIcon={<RemoveCircleIcon />}
+                    onClick={removeLayer}
+                    disabled={layers.length <= MIN_LAYERS}
+                >
                     Remove Layer
                 </Button>
             </div>
