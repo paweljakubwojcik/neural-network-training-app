@@ -5,6 +5,7 @@ const HEIGHT = 200
 
 interface NetworkDiagramProps {
     layers: [number]
+    color?: string
 }
 
 type Point = {
@@ -17,7 +18,7 @@ type Point = {
  * prop layers is an array of numbers where every number represents number of nodes in the leyer
  * @example layers = [1,2,1]
  */
-export default function NetworkDiagram({ layers, ...props }: NetworkDiagramProps) {
+export default function NetworkDiagram({ layers, color, ...props }: NetworkDiagramProps) {
     const nodes: Point[][] = layers.map((numberOfNodes, j) => {
         const step_x = WIDTH / (layers.length + 1)
         return new Array(numberOfNodes).fill(0).map((zero, i) => {
@@ -54,7 +55,7 @@ export default function NetworkDiagram({ layers, ...props }: NetworkDiagramProps
             {nodes
                 .reduce((prev, curr) => [...prev, ...curr], [])
                 .map(({ x, y }, i) => (
-                    <Circle style={{ top: y + 'px', left: x + 'px' }} key={i} />
+                    <Circle color={color} style={{ top: y + 'px', left: x + 'px' }} key={i} />
                 ))}
         </Container>
     )
@@ -75,7 +76,7 @@ const Circle = styled.div`
     width: 30px;
     height: 30px;
     border-radius: 50%;
-    background-color: #3f50b5;
+    background-color: ${(props) => props.color};
     box-shadow: rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 1px 3px 1px;
 
     transform: translate(-50%, -50%);

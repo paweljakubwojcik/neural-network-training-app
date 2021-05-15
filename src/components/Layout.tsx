@@ -1,9 +1,5 @@
 import styled, { StyledComponent } from 'styled-components'
 
-type StyledComponentWithChildren = StyledComponent<'div', any, {}, never> & {
-    Header?: StyledComponent<'h1', any, {}, never>
-}
-
 /**
  * layout flex container
  */
@@ -18,7 +14,9 @@ const Container = styled.div`
     padding: 1em;
 `
 
-const Column: StyledComponentWithChildren = styled.div`
+const Column: StyledComponent<'div', any, {}, never> & {
+    Header?: StyledComponent<'h1', any, {}, never>
+} = styled.div`
     display: flex;
     flex-direction: column;
     align-items: center;

@@ -2,6 +2,7 @@ import { Button, IconButton } from '@material-ui/core'
 import SettingsIcon from '@material-ui/icons/Settings'
 import StyledCard from '../components/StyledCard'
 import { Container, Column } from '../components/Layout'
+import { useTheme } from '@material-ui/core/styles'
 
 import Chart from '../components/Chart'
 import { useContext } from 'react'
@@ -24,6 +25,12 @@ export default function Main() {
 
     const { test: testData, learning: learningData } = useContext(DataContext)
 
+    const {
+        palette: {
+            primary: { main: MainColor },
+        },
+    } = useTheme()
+
     const pointData = useChartData({
         datasets: [{ data: learningData, label: 'Learning data' }],
     })
@@ -33,8 +40,8 @@ export default function Main() {
             {
                 data: trainingLogs,
                 label: loss,
-                pointBackgroundColor: 'blue',
-                backgroundColor: 'blue',
+                pointBackgroundColor: MainColor,
+                backgroundColor: MainColor,
                 showLine: true,
             },
         ],
@@ -51,7 +58,7 @@ export default function Main() {
                             <SettingsIcon />
                         </IconButton>
                     </StyledCard.Header>
-                    <NetworkDiagram layers={layers.map((layer) => layer.units)} />
+                    <NetworkDiagram layers={layers.map((layer) => layer.units)} color={MainColor} />
                     <LayersControls />
                     <StyledCard.Header>
                         <h2>Model options</h2>

@@ -1,5 +1,7 @@
 import { createGlobalStyle } from 'styled-components'
 
+/* variables are rewritten from the MaterialUI theme */
+
 export const GlobalStyles = createGlobalStyle`
 
     * {
@@ -12,9 +14,9 @@ export const GlobalStyles = createGlobalStyle`
 
     html {
         /* CSS variables */
-        --background-color:#FAFAFA;
-        --secondary-font-color: #414141;
-        --font-color:#1E1E1E;
+        --background-color: ${(props) => props.theme.palette.background.default};
+        --secondary-font-color: ${(props) => props.theme.palette.text.secondary};
+        --font-color:${(props) => props.theme.palette.text.primary};
     }
 
     body {
