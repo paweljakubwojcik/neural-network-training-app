@@ -1,33 +1,59 @@
 import type { Reducer } from 'react'
-import type { ModelSettings, ReducerAction } from '../../types'
 import {
     INCREMENT_LAYER_UNITS,
     DECREMENT_LAYER_UNITS,
     ADD_LAYER,
     REMOVE_LAYER,
     SET_ACTIVATION_FUNCTION,
+    SET_OPTIMAZER,
 } from '../actions/ModelSettings'
 
 import { MIN_UNITS, MAX_UNITS, MAX_LAYERS, MIN_LAYERS } from '../../constants'
+
+import type { Optimizer, ModelCompileArgs } from '@tensorflow/tfjs'
+import { train } from '@tensorflow/tfjs'
+
+type OptimizerConstructor = () => Optimizer
+export interface ModelSettings {
+    layers: [
+        {
+            name: string
+            units: number
+            activationFunc: string | undefined
+            adjustable: boolean
+        }
+    ]
+    optimizer: OptimizerConstructor
+    optimazerOptions: any
+    loss: ModelCompileArgs['loss']
+}
+
+export type ReducerAction = {
+    type: string
+    payload?: {
+        layerName?: string
+        newValue?: string
+        newOptimazer?: keyof typeof train
+    }
+}
 
 export const ModelSettingsReducer: Reducer<ModelSettings, ReducerAction> = (
     state,
     action
 ): ModelSettings => {
-    const { type, payload: { layerName, newValue } = {} } = action
+    const { type, payload: { layerName, newValue = '', newOptimazer = 'sgd' } = {} } = action
 
-    const layerIndexToChange =
-        layerName && state.layers.findIndex((layer) => layer.name === layerName)
+    const layerToChange = state.layers.find((layer) => layer.name === layerName)!
 
     switch (type) {
         case INCREMENT_LAYER_UNITS:
-            if (state.layers[layerIndexToChange].units >= MAX_UNITS) return state
-            state.layers[layerIndexToChange].units++
+            if (layerToChange.units >= MAX_UNITS) return state
+            layerToChange.units++
             return { ...state }
 
         case DECREMENT_LAYER_UNITS:
-            if (state.layers[layerIndexToChange].units <= MIN_UNITS) return state
-            state.layers[layerIndexToChange].units--
+            if (layerToChange.units <= MIN_UNITS) return state
+            layerToChange.units--
             return { ...state }
 
         case ADD_LAYER:
@@ -46,8 +72,13 @@ export const ModelSettingsReducer: Reducer<ModelSettings, ReducerAction> = (
             return { ...state }
 
         case SET_ACTIVATION_FUNCTION:
-            state.layers[layerIndexToChange].activationFunc = newValue
+            layerToChange.activationFunc = newValue
             return { ...state }
+
+        case SET_OPTIMAZER:
+            console.log(newOptimazer)
+
+            return { ...state, optimizer: train[newOptimazer] as OptimizerConstructor }
 
         default:
             break

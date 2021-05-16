@@ -3,7 +3,7 @@ import { useContext, useState } from 'react'
 import { Button, IconButton } from '@material-ui/core'
 import SettingsIcon from '@material-ui/icons/Settings'
 import StyledCard from '../components/StyledCard'
-import { Container, Column } from '../components/Layout'
+import { Container, Column, Row } from '../components/Layout'
 import { useTheme } from '@material-ui/core/styles'
 
 import Chart from '../components/Chart'
@@ -13,6 +13,7 @@ import LayersControls from '../components/LayersControls'
 import NetworkDiagram from '../components/NetworkDiagram'
 import useChartData from '../hooks/useChartData'
 import { DataContext } from '../context/Data'
+import ModelOptions from '../containers/ModelOptions'
 
 export default function Main() {
     const {
@@ -24,6 +25,7 @@ export default function Main() {
         isCompiled,
         isTraining,
         modelSettings: { layers, loss },
+        trainingOptions: { epochs },
     } = useContext(TensorflowContext)
 
     const { test: testData, learning: learningData } = useContext(DataContext)
@@ -65,6 +67,7 @@ export default function Main() {
 
     return (
         <Container>
+            {/* Model section */}
             <Column>
                 <Column.Header>Model</Column.Header>
                 <StyledCard>
@@ -79,6 +82,7 @@ export default function Main() {
                     <StyledCard.Header>
                         <h2>Model options</h2>
                     </StyledCard.Header>
+                    <ModelOptions />
                     <Button
                         variant="contained"
                         color="primary"
@@ -89,6 +93,7 @@ export default function Main() {
                     </Button>
                 </StyledCard>
             </Column>
+            {/* Training section */}
             <Column>
                 <Column.Header>Training</Column.Header>
                 <StyledCard>
@@ -97,19 +102,37 @@ export default function Main() {
                     </StyledCard.Header>
                     <Chart
                         data={trainingData}
-                        options={{ animation: false }}
+                        options={{
+                            animation: false,
+                            scales: {
+                                x: {
+                                    max: epochs,
+                                    min: 0,
+                                },
+                            },
+                        }}
                         title={'Learning curve'}
                     />
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={isTraining ? stopTraining : trainModel}
-                        disabled={!isCompiled}
-                    >
-                        {isTraining ? 'stop' : 'Train'}
-                    </Button>
+                    <Row>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={isTraining ? stopTraining : trainModel}
+                            disabled={!isCompiled}
+                        >
+                            {isTraining ? 'stop' : 'Train'}
+                        </Button>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={() => console.log('randomize weights')}
+                        >
+                            Reset model
+                        </Button>
+                    </Row>
                 </StyledCard>
             </Column>
+            {/* Evaulation section */}
             <Column>
                 <Column.Header>Evaluation</Column.Header>
                 <StyledCard>

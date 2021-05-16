@@ -9,6 +9,7 @@ import {
     INCREMENT_LAYER_UNITS,
     REMOVE_LAYER,
     SET_ACTIVATION_FUNCTION,
+    SET_OPTIMAZER,
 } from './actions/ModelSettings'
 
 const initialModelSettings = {
@@ -32,7 +33,7 @@ const initialModelSettings = {
             adjustable: true,
         },
     ],
-    optimazer: tf.train.sgd,
+    optimizer: tf.train.sgd,
     optimazerOptions: {
         learningRate: 0.0001,
     },
@@ -52,7 +53,13 @@ const initialState = {
     incrementLayerUnits: (layerName) => {},
     decrementLayerUnits: (layerName) => {},
     addLayer: () => {},
-    reomveLayer: (layerName) => {},
+    removeLayer: () => {},
+    setActivationFunction: (layerName, newValue) => {},
+}
+
+const initialTrainingOptions = {
+    batchSize: 128,
+    epochs: 100,
 }
 
 const TensorflowContext = createContext({
@@ -65,6 +72,7 @@ function TensorflowProvider({ children, ...props }) {
     const model = useRef(null)
     const [isCompiled, setCompiled] = useState(false)
     const [isTraining, setTraining] = useState(false)
+    const [trainingOptions, setTrainingOptions] = useState(initialTrainingOptions)
 
     // possibly change it to hook
     const [modelSettings, dispatch] = useReducer(ModelSettingsReducer, initialModelSettings)
@@ -94,8 +102,12 @@ function TensorflowProvider({ children, ...props }) {
         dispatch({ type: SET_ACTIVATION_FUNCTION, payload: { layerName, newValue } })
     }
 
+    const setOptimazer = (newOptimazer) => {
+        dispatch({ type: SET_OPTIMAZER, payload: { newOptimazer } })
+    }
+
     const compileModel = useCallback(async () => {
-        const { layers, optimazer, optimazerOptions, loss } = modelSettings
+        const { layers, optimizer, optimazerOptions, loss } = modelSettings
         setTrainingLogs([])
 
         model.current = tf.sequential({
@@ -109,7 +121,7 @@ function TensorflowProvider({ children, ...props }) {
         })
 
         model.current.compile({
-            optimizer: optimazer(...Object.values(optimazerOptions)),
+            optimizer: optimizer(...Object.values(optimazerOptions)),
             loss, // taka fcn jest w instrukcji
             metrics: [tf.metrics[loss]],
         })
@@ -119,10 +131,11 @@ function TensorflowProvider({ children, ...props }) {
     }, [model, modelSettings])
 
     const trainModel = useCallback(async () => {
+        const { epochs, batchSize } = trainingOptions
         setTraining(true)
         await model.current.fit(tf.tensor(trainX), tf.tensor(trainY), {
-            batchSize: 128,
-            epochs: 100,
+            batchSize,
+            epochs,
             initialEpoch: trainingLogs.length,
             shuffle: true,
             validationSplit: 0.1,
@@ -137,7 +150,7 @@ function TensorflowProvider({ children, ...props }) {
             },
         })
         setTraining(false)
-    }, [model, modelSettings.loss, trainingLogs.length])
+    }, [modelSettings.loss, trainingLogs.length, trainingOptions])
 
     const stopTraining = useCallback(() => {
         model.current.stopTraining = true
@@ -147,6 +160,14 @@ function TensorflowProvider({ children, ...props }) {
     const evaulateData = async (data) => {
         const prediction = await model.current.predict(tf.tensor(data)).array()
         return prediction.map((predicted, index) => ({ y: predicted, x: data[index] }))
+    }
+
+    const setBatchSize = (newValue) => {
+        setTrainingOptions((prev) => ({ ...prev, batchSize: newValue }))
+    }
+
+    const setEpochsNumber = (newValue) => {
+        setTrainingOptions((prev) => ({ ...prev, epochs: newValue }))
     }
 
     return (
@@ -165,7 +186,11 @@ function TensorflowProvider({ children, ...props }) {
                 removeLayer,
                 setActivationFunction,
                 evaulateData,
+                setOptimazer,
+                setBatchSize,
+                setEpochsNumber,
                 modelSettings,
+                trainingOptions,
             }}
             {...props}
         >

@@ -1,10 +1,10 @@
 import { createContext, useCallback, useState } from 'react'
-import trainData, { trainX } from '../util/MockData'
+import trainData, { testData } from '../util/MockData'
 
 const initialState = {
     learning: trainData,
     validation: [],
-    test: new Array(10).fill(0).map((_, i) => 5 * i),
+    test: testData,
     setLearningData: () => {},
     setValidationData: () => {},
     setTestData: () => {},

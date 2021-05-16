@@ -25,9 +25,18 @@ const Column: StyledComponent<'div', any, {}, never> & {
     padding: 0.4em;
 `
 
+const Row = styled.div`
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-evenly;
+
+    width: 100%;
+`
+
 Column.Header = styled.h1`
     display: block;
     width: 100%;
 `
 
-export { Container, Column }
+export { Container, Column, Row }
