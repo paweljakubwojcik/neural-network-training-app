@@ -34,7 +34,7 @@ const initialModelSettings = {
     ],
     optimazer: tf.train.sgd,
     optimazerOptions: {
-        learningRate: 0.001,
+        learningRate: 0.0001,
     },
     loss: 'meanSquaredError',
 }
@@ -47,7 +47,7 @@ const initialState = {
     modelSettings: initialModelSettings,
     isCompiled: false,
     trainModel: () => {},
-    evulateData: (data) => {},
+    evaulateData: (data) => {},
     compileModel: () => {},
     incrementLayerUnits: (layerName) => {},
     decrementLayerUnits: (layerName) => {},
@@ -62,7 +62,7 @@ const TensorflowContext = createContext({
 function TensorflowProvider({ children, ...props }) {
     const [trainingLogs, setTrainingLogs] = useState([]) // FIXME: this doesn't make sense now,
 
-    const { current: model } = useRef(tf.sequential())
+    const model = useRef(null)
     const [isCompiled, setCompiled] = useState(false)
     const [isTraining, setTraining] = useState(false)
 
@@ -98,30 +98,30 @@ function TensorflowProvider({ children, ...props }) {
         const { layers, optimazer, optimazerOptions, loss } = modelSettings
         setTrainingLogs([])
 
-        layers.forEach(({ units, activation }, index) => {
-            model.add(
+        model.current = tf.sequential({
+            layers: layers.map(({ units, activation }, index) =>
                 tf.layers.dense({
                     inputShape: index === 0 ? [units] : undefined,
                     units,
                     activation,
                 })
-            )
+            ),
         })
 
-        model.compile({
+        model.current.compile({
             optimizer: optimazer(...Object.values(optimazerOptions)),
             loss, // taka fcn jest w instrukcji
             metrics: [tf.metrics[loss]],
         })
         setCompiled(true)
         console.log('%cModel compiled succesfully', 'font-weight: bold; font-size: 16px;')
-        model.summary()
+        model.current.summary()
     }, [model, modelSettings])
 
     const trainModel = useCallback(async () => {
         setTraining(true)
-        await model.fit(tf.tensor(trainX), tf.tensor(trainY), {
-            batchSize: 32,
+        await model.current.fit(tf.tensor(trainX), tf.tensor(trainY), {
+            batchSize: 128,
             epochs: 100,
             initialEpoch: trainingLogs.length,
             shuffle: true,
@@ -140,9 +140,14 @@ function TensorflowProvider({ children, ...props }) {
     }, [model, modelSettings.loss, trainingLogs.length])
 
     const stopTraining = useCallback(() => {
-        model.stopTraining = true
+        model.current.stopTraining = true
         setTraining(false)
     }, [model])
+
+    const evaulateData = async (data) => {
+        const prediction = await model.current.predict(tf.tensor(data)).array()
+        return prediction.map((predicted, index) => ({ y: predicted, x: data[index] }))
+    }
 
     return (
         <TensorflowContext.Provider
@@ -159,6 +164,7 @@ function TensorflowProvider({ children, ...props }) {
                 addLayer,
                 removeLayer,
                 setActivationFunction,
+                evaulateData,
                 modelSettings,
             }}
             {...props}
