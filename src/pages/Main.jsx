@@ -24,9 +24,10 @@ export default function Main() {
         trainingLogs,
         isCompiled,
         isTraining,
-        modelSettings: { layers, loss },
-        trainingOptions: { epochs },
+        modelSettings: { layers, loss, epochs },
     } = useContext(TensorflowContext)
+
+    console.log(trainingLogs)
 
     const { test: testData, learning: learningData } = useContext(DataContext)
 

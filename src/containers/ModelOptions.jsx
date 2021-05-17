@@ -3,17 +3,18 @@ import styled from 'styled-components'
 
 import { train } from '@tensorflow/tfjs'
 
-import { Card, Button, Select, MenuItem, TextField } from '@material-ui/core'
+import { Select, MenuItem, TextField } from '@material-ui/core'
 import { TensorflowContext } from '../context/Tensorflow'
 
 export default function ModelOptions() {
     const {
-        modelSettings: { optimizer },
-        trainingOptions: { batchSize, epochs },
+        modelSettings: { optimizer, batchSize, epochs, optimazerOptions },
         setEpochsNumber,
         setBatchSize,
-        setOptimazer,
+        setOptimizer,
     } = useContext(TensorflowContext)
+
+    const learningAlgorithmOptions = Object.entries(optimazerOptions)
 
     return (
         <Container>
@@ -21,7 +22,7 @@ export default function ModelOptions() {
                 <Select
                     value={optimizer.name}
                     onChange={(e) => {
-                        setOptimazer(e.target.value)
+                        setOptimizer(e.target.value)
                     }}
                     style={{ width: '100%' }}
                 >
@@ -31,6 +32,37 @@ export default function ModelOptions() {
                         </MenuItem>
                     ))}
                 </Select>
+            </Row>
+            <Row>
+                {learningAlgorithmOptions.map(([key, value]) => {
+                    if (typeof value === 'number')
+                        return (
+                            <TextField
+                                label={key}
+                                key={key}
+                                type="number"
+                                value={value}
+                                onChange={(e) => {
+                                    console.log(`changed ${key}`)
+                                }}
+                            />
+                        )
+                    if (typeof value === 'boolean')
+                        return (
+                            <Select
+                                value={value}
+                                key={key}
+                                label={key}
+                                onChange={(e) => {
+                                    console.log(`changed ${key}`)
+                                }}
+                            >
+                                <MenuItem value={true}>True</MenuItem>
+                                <MenuItem value={false}>False</MenuItem>
+                            </Select>
+                        )
+                    return null
+                })}
             </Row>
             <Row>
                 <TextField

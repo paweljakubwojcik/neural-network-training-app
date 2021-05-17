@@ -25,7 +25,7 @@ export default function LayersControls() {
             <div style={{ marginRight: 'auto' }}>{layer.name}</div>
             <Select
                 labelId={`${layer.name} activation function`}
-                value={layer.activationFunc}
+                value={layer.activation}
                 onChange={(e) => setActivationFunction(layer.name, e.target.value)}
             >
                 {activationFunctions.map((func) => (
