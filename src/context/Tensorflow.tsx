@@ -3,7 +3,6 @@ import React, {
     ReactNode,
     useCallback,
     useEffect,
-    useReducer,
     useRef,
     useState,
     useContext,
@@ -13,15 +12,23 @@ import * as tf from '@tensorflow/tfjs'
 import { trainX, trainY } from '../util/MockData'
 import getParamNames from '../util/getParamNames'
 
-import { MIN_UNITS, MAX_UNITS, MAX_LAYERS, MIN_LAYERS, ACTIVATION_IDENTIFIRES } from '../constants'
+import {
+    MIN_UNITS,
+    MAX_UNITS,
+    MAX_LAYERS,
+    MIN_LAYERS,
+    ACTIVATION_IDENTIFIRES,
+    METRICS,
+    LOSSES_FUNCTIONS,
+} from '../constants'
 
-import { losses, Optimizer, Sequential, train } from '@tensorflow/tfjs'
+import { Optimizer, Sequential, train } from '@tensorflow/tfjs'
 import type { ScatterDataPoint } from 'chart.js'
 
 type ActivationIdentifier = typeof ACTIVATION_IDENTIFIRES[number]
 type OptimizerType = keyof typeof train
-type LossesType = keyof typeof losses
-type MetricType = keyof typeof tf.metrics
+type LossesType = typeof LOSSES_FUNCTIONS[number]
+type MetricType = typeof METRICS[number]
 
 type OptimizerConstructor = (...params: any) => Optimizer
 
@@ -105,6 +112,8 @@ type TensorflowContextType = {
     setEpochsNumber: (epochs: number) => void
     setOptimizer: (newOptimazer: OptimizerType) => void
     setOptimizerOption: (key: string, newValue: any) => void
+    setLoss: (newValue: LossesType) => void
+    setMetric: (newValue: MetricType) => void
 }
 
 const TensorflowContext = createContext<TensorflowContextType>({
@@ -126,6 +135,8 @@ const TensorflowContext = createContext<TensorflowContextType>({
     setEpochsNumber: (epochs: number) => {},
     setOptimizer: (newOptimazer: OptimizerType) => {},
     setOptimizerOption: (key: string, newValue: any) => {},
+    setLoss: (newValue: LossesType) => {},
+    setMetric: (newValue: MetricType) => {},
 })
 
 function TensorflowProvider({ children }: { children: ReactNode }) {
@@ -226,7 +237,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                     inputShape: index === 0 ? [units] : undefined,
                     units,
                     activation,
-                    useBias: false,
+                    /*  useBias: false, */
                 })
             ),
         })
@@ -256,6 +267,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                         ...prev,
                         { x: epoch, y: logs ? logs[state.metric] : 0 },
                     ])
+                    console.log(logs)
                     // when fullfilling the training goal
                     /* if (epoch === 2) {
                         model.stopTraining = true
@@ -299,6 +311,17 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         })
     }
 
+    const setLoss = (newValue: LossesType) => {
+        setState((prev) => {
+            return { ...prev, loss: newValue }
+        })
+    }
+    const setMetric = (newValue: MetricType) => {
+        setState((prev) => {
+            return { ...prev, metric: newValue }
+        })
+    }
+
     return (
         <TensorflowContext.Provider
             value={{
@@ -320,6 +343,8 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                 setEpochsNumber,
                 setOptimizer,
                 setOptimizerOption,
+                setLoss,
+                setMetric,
             }}
         >
             {children}

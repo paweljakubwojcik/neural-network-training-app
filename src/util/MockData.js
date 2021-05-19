@@ -1,11 +1,11 @@
 // for now
 
-const LENGTH = 128
-const TEST_LENGTH = 20
+const LENGTH = 100
+const TEST_LENGTH = 10
 export const trainX = new Array(LENGTH).fill(0).map((zero, index) => index)
 export const trainY = new Array(LENGTH)
     .fill(0)
-    .map((zero, index) => Math.random() * 20 - 10 + index * 2)
+    .map((zero, index) => index / LENGTH + Math.random() * 0.2 - 0.1)
 
 let trainData = []
 for (let i = 0; i < trainY.length; i++) {

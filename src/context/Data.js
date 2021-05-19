@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useState } from 'react'
 import trainData, { testData } from '../util/MockData'
 
+// DATA NEED TO BE NORMALISED
+
 const initialState = {
     learning: trainData,
     validation: [],

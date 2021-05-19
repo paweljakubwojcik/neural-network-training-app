@@ -10,25 +10,27 @@ export default function LearningSettings() {
     } = useTensorflow()
 
     return (
-        <Row>
-            <TextField
-                id="Epochs"
-                label="Epochs"
-                type="number"
-                value={epochs.toString()}
-                onChange={(e) => {
-                    setEpochsNumber(e.target.valueAsNumber)
-                }}
-            />
-            <TextField
-                id="BatchSize"
-                label="BatchSize"
-                type="number"
-                value={batchSize.toString()}
-                onChange={(e) => {
-                    setBatchSize(e.target.valueAsNumber)
-                }}
-            />
-        </Row>
+        <>
+            <Row>
+                <TextField
+                    id="Epochs"
+                    label="Epochs"
+                    type="number"
+                    value={epochs.toString()}
+                    onChange={(e) => {
+                        setEpochsNumber(e.target.valueAsNumber)
+                    }}
+                />
+                <TextField
+                    id="BatchSize"
+                    label="BatchSize"
+                    type="number"
+                    value={batchSize.toString()}
+                    onChange={(e) => {
+                        setBatchSize(e.target.valueAsNumber)
+                    }}
+                />
+            </Row>
+        </>
     )
 }

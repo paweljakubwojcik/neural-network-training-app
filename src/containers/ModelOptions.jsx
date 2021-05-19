@@ -1,14 +1,17 @@
 import styled from 'styled-components'
 import { Row } from '../components/Layout'
 import { train } from '@tensorflow/tfjs'
-import { Select, MenuItem, Input, InputLabel, FormControl } from '@material-ui/core'
+import { Select, MenuItem, Input, InputLabel, FormControl, TextField } from '@material-ui/core'
 import { useTensorflow } from '../context/Tensorflow'
+import { LOSSES_FUNCTIONS, METRICS } from '../constants'
 
 export default function ModelOptions() {
     const {
-        modelSettings: { optimizer, optimizerOptions },
+        modelSettings: { optimizer, optimizerOptions, loss, metric },
         setOptimizer,
         setOptimizerOption,
+        setLoss,
+        setMetric,
     } = useTensorflow()
 
     const learningAlgorithmOptions = Object.entries(optimizerOptions)
@@ -62,6 +65,42 @@ export default function ModelOptions() {
                         )}
                     </FormControl>
                 ))}
+            </Row>
+            <Row>
+                <FormControl>
+                    <InputLabel id={'Metric'}>{'Metric'}</InputLabel>
+                    <Select
+                        id="Metric"
+                        label="Metric"
+                        value={metric}
+                        onChange={(e) => {
+                            setMetric(e.target.value)
+                        }}
+                    >
+                        {METRICS.map((value) => (
+                            <MenuItem value={value} key={value}>
+                                {value}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
+                <FormControl>
+                    <InputLabel id={'Loss'}>{'Loss'}</InputLabel>
+                    <Select
+                        id="Loss"
+                        label="Loss"
+                        value={loss}
+                        onChange={(e) => {
+                            setLoss(e.target.value)
+                        }}
+                    >
+                        {LOSSES_FUNCTIONS.map((value) => (
+                            <MenuItem value={value} key={value}>
+                                {value}
+                            </MenuItem>
+                        ))}
+                    </Select>
+                </FormControl>
             </Row>
         </Container>
     )
