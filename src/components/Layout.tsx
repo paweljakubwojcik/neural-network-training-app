@@ -28,9 +28,10 @@ const Column: StyledComponent<'div', any, {}, never> & {
 const Row = styled.div`
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: end;
     justify-content: space-evenly;
 
+    margin: 0.5em;
     width: 100%;
 `
 

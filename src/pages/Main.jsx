@@ -1,4 +1,4 @@
-import { useContext, useState } from 'react'
+import { useState } from 'react'
 
 import { Button, IconButton } from '@material-ui/core'
 import SettingsIcon from '@material-ui/icons/Settings'
@@ -8,12 +8,13 @@ import { useTheme } from '@material-ui/core/styles'
 
 import Chart from '../components/Chart'
 
-import { TensorflowContext } from '../context/Tensorflow'
-import LayersControls from '../components/LayersControls'
+import { useTensorflow } from '../context/Tensorflow'
+import LayersControls from '../containers/LayersControls'
 import NetworkDiagram from '../components/NetworkDiagram'
 import useChartData from '../hooks/useChartData'
-import { DataContext } from '../context/Data'
+import { useData } from '../context/Data'
 import ModelOptions from '../containers/ModelOptions'
+import LearningSettings from '../containers/LearningSettings'
 
 export default function Main() {
     const {
@@ -24,12 +25,11 @@ export default function Main() {
         trainingLogs,
         isCompiled,
         isTraining,
-        modelSettings: { layers, loss, epochs },
-    } = useContext(TensorflowContext)
+        modelSettings: { layers, metric },
+        learningSettings: { epochs },
+    } = useTensorflow()
 
-    console.log(trainingLogs)
-
-    const { test: testData, learning: learningData } = useContext(DataContext)
+    const { test: testData, learning: learningData } = useData()
 
     const {
         palette: {
@@ -58,7 +58,7 @@ export default function Main() {
         datasets: [
             {
                 data: trainingLogs,
-                label: loss,
+                label: metric,
                 pointBackgroundColor: MainColor,
                 backgroundColor: MainColor,
                 showLine: true,
@@ -84,14 +84,19 @@ export default function Main() {
                         <h2>Model options</h2>
                     </StyledCard.Header>
                     <ModelOptions />
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={compileModel}
-                        disabled={isCompiled}
-                    >
-                        {isCompiled ? 'Compiled' : 'Compile model'}
-                    </Button>
+                    <Row>
+                        <Button
+                            variant="contained"
+                            color="primary"
+                            onClick={compileModel}
+                            disabled={isCompiled}
+                        >
+                            {isCompiled ? 'Compiled' : 'Compile model'}
+                        </Button>
+                        <Button color="primary" onClick={() => console.log('randomize weights')}>
+                            Reset model
+                        </Button>
+                    </Row>
                 </StyledCard>
             </Column>
             {/* Training section */}
@@ -114,6 +119,10 @@ export default function Main() {
                         }}
                         title={'Learning curve'}
                     />
+                    <StyledCard.Header>
+                        <h3>Training options</h3>
+                    </StyledCard.Header>
+                    <LearningSettings />
                     <Row>
                         <Button
                             variant="contained"
@@ -122,13 +131,6 @@ export default function Main() {
                             disabled={!isCompiled}
                         >
                             {isTraining ? 'stop' : 'Train'}
-                        </Button>
-                        <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => console.log('randomize weights')}
-                        >
-                            Reset model
                         </Button>
                     </Row>
                 </StyledCard>

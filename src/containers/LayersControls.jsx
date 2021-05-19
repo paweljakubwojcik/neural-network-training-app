@@ -1,14 +1,11 @@
-import { useContext } from 'react'
 import styled from 'styled-components'
 import { Card, Button, Select, MenuItem } from '@material-ui/core'
 import AddBoxIcon from '@material-ui/icons/AddBox'
 import RemoveCircleIcon from '@material-ui/icons/RemoveCircle'
-import CounterControl from './CounterControl'
-import { TensorflowContext } from '../context/Tensorflow'
+import CounterControl from '../components/CounterControl'
+import { useTensorflow } from '../context/Tensorflow'
 
-import { MIN_UNITS, MAX_UNITS, MAX_LAYERS, MIN_LAYERS } from '../constants'
-
-const activationFunctions = ['linear', 'relu']
+import { MIN_UNITS, MAX_UNITS, MAX_LAYERS, MIN_LAYERS, ACTIVATION_IDENTIFIRES } from '../constants'
 
 export default function LayersControls() {
     const {
@@ -18,7 +15,7 @@ export default function LayersControls() {
         addLayer,
         setActivationFunction,
         removeLayer,
-    } = useContext(TensorflowContext)
+    } = useTensorflow()
 
     const LayersControls = layers.map((layer, i) => (
         <LayerControl key={i}>
@@ -28,7 +25,7 @@ export default function LayersControls() {
                 value={layer.activation}
                 onChange={(e) => setActivationFunction(layer.name, e.target.value)}
             >
-                {activationFunctions.map((func) => (
+                {ACTIVATION_IDENTIFIRES.map((func) => (
                     <MenuItem value={func} key={func}>
                         {func}
                     </MenuItem>
@@ -77,6 +74,8 @@ const Container = styled.div`
     width: 100%;
     flex-direction: column;
     align-items: center;
+
+    margin-bottom: 2em;
 `
 
 const Title = styled.h3`

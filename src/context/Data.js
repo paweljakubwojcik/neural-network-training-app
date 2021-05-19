@@ -1,4 +1,4 @@
-import { createContext, useCallback, useState } from 'react'
+import { createContext, useCallback, useContext, useState } from 'react'
 import trainData, { testData } from '../util/MockData'
 
 const initialState = {
@@ -13,6 +13,8 @@ const initialState = {
 const DataContext = createContext({
     ...initialState,
 })
+
+const useData = () => useContext(DataContext)
 
 function DataProvider({ children, ...props }) {
     const [{ learning, validation, test }, setState] = useState(initialState)
@@ -46,4 +48,4 @@ function DataProvider({ children, ...props }) {
     )
 }
 
-export { DataContext, DataProvider }
+export { DataContext, DataProvider, useData }

@@ -13,13 +13,12 @@ import * as tf from '@tensorflow/tfjs'
 import { trainX, trainY } from '../util/MockData'
 import getParamNames from '../util/getParamNames'
 
-import { MIN_UNITS, MAX_UNITS, MAX_LAYERS, MIN_LAYERS } from '../constants'
+import { MIN_UNITS, MAX_UNITS, MAX_LAYERS, MIN_LAYERS, ACTIVATION_IDENTIFIRES } from '../constants'
 
 import { losses, Optimizer, Sequential, train } from '@tensorflow/tfjs'
 import type { ScatterDataPoint } from 'chart.js'
 
-type ActivationIdentifier = 'linear' | 'relu'
-
+type ActivationIdentifier = typeof ACTIVATION_IDENTIFIRES[number]
 type OptimizerType = keyof typeof train
 type LossesType = keyof typeof losses
 type MetricType = keyof typeof tf.metrics
@@ -34,19 +33,20 @@ export interface ModelSettings {
         adjustable: boolean
     }[]
     optimizer: OptimizerConstructor
-    optimazerOptions: any
+    optimizerOptions: any
     loss: LossesType
     metric: MetricType
+}
+export interface LearningSettings {
     batchSize: number
     epochs: number
 }
-
-console.log(Object.values(train).map((v) => getParamNames(v)))
 
 const defaultOptimizerOptions: {
     [key: string]: number | boolean
 } = {
     learningRate: 0.001,
+    momentum: 1,
 }
 
 const initialModelSettings: ModelSettings = {
@@ -71,11 +71,14 @@ const initialModelSettings: ModelSettings = {
         },
     ],
     optimizer: train.sgd as unknown as OptimizerConstructor,
-    optimazerOptions: {
+    optimizerOptions: {
         learningRate: 0.001,
     },
     loss: 'meanSquaredError',
-    metric: 'meanSquaredError',
+    metric: 'meanAbsoluteError',
+}
+
+const initialLearningSettings: LearningSettings = {
     batchSize: 128,
     epochs: 100,
 }
@@ -86,6 +89,7 @@ const initialModelSettings: ModelSettings = {
 type TensorflowContextType = {
     trainingLogs: ScatterDataPoint[]
     modelSettings: ModelSettings
+    learningSettings: LearningSettings
     isCompiled: boolean
     isTraining: boolean
     trainModel: () => Promise<void>
@@ -100,11 +104,13 @@ type TensorflowContextType = {
     setBatchSize: (batchSize: number) => void
     setEpochsNumber: (epochs: number) => void
     setOptimizer: (newOptimazer: OptimizerType) => void
+    setOptimizerOption: (key: string, newValue: any) => void
 }
 
 const TensorflowContext = createContext<TensorflowContextType>({
     trainingLogs: [],
     modelSettings: initialModelSettings,
+    learningSettings: initialLearningSettings,
     isCompiled: false,
     isTraining: false,
     trainModel: async () => {},
@@ -119,6 +125,7 @@ const TensorflowContext = createContext<TensorflowContextType>({
     setBatchSize: (batchSize: number) => {},
     setEpochsNumber: (epochs: number) => {},
     setOptimizer: (newOptimazer: OptimizerType) => {},
+    setOptimizerOption: (key: string, newValue: any) => {},
 })
 
 function TensorflowProvider({ children }: { children: ReactNode }) {
@@ -131,6 +138,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
 
     // possibly change it to hook
     const [state, setState] = useState(initialModelSettings)
+    const [learningSettings, setLearningSettings] = useState(initialLearningSettings)
 
     // when any setting is change model needs to be compiled again
     useEffect(() => {
@@ -184,16 +192,19 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         })
     }
 
-    const setOptimizer = (newOptimazer: keyof typeof train) => {
-        const optimizer = train[newOptimazer] as OptimizerConstructor
+    const setOptimizer = (newOptimizer: OptimizerType) => {
+        const optimizer = train[newOptimizer] as OptimizerConstructor
         const optimizerOptions: {
             [k: string]: number | undefined | boolean
         } = Object.fromEntries(
             getParamNames(optimizer).map(({ key, type, defaulValue: value }) => {
-                let defaultValue = defaultOptimizerOptions[key]
+                let defaultValue
                 if (!value) defaultValue = defaultOptimizerOptions[key]
-                if (type === 'boolean') defaultValue = value === 'true'
-                if (type === 'number') defaultValue = parseInt(value!)
+                else {
+                    if (type === 'boolean') defaultValue = value === 'true'
+                    if (type === 'number') defaultValue = parseFloat(value!)
+                }
+
                 return [key, defaultValue]
             })
         )
@@ -206,7 +217,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }
 
     const compileModel = useCallback(async () => {
-        const { layers, optimizer, optimazerOptions, loss, metric } = state
+        const { layers, optimizer, optimizerOptions, loss, metric } = state
         setTrainingLogs([])
 
         model.current = tf.sequential({
@@ -215,12 +226,13 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                     inputShape: index === 0 ? [units] : undefined,
                     units,
                     activation,
+                    useBias: false,
                 })
             ),
         })
 
         model.current.compile({
-            optimizer: optimizer(...Object.values(optimazerOptions)),
+            optimizer: optimizer(...Object.values(optimizerOptions)),
             loss, // taka fcn jest w instrukcji
             metrics: tf.metrics[metric],
         })
@@ -230,7 +242,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }, [state])
 
     const trainModel = useCallback(async () => {
-        const { epochs, batchSize } = state
+        const { epochs, batchSize } = learningSettings
         setTraining(true)
         await model.current.fit(tf.tensor(trainX), tf.tensor(trainY), {
             batchSize,
@@ -252,7 +264,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             },
         })
         setTraining(false)
-    }, [state, trainingLogs.length])
+    }, [learningSettings, state.metric, trainingLogs.length])
 
     const stopTraining = useCallback(() => {
         model.current.stopTraining = true
@@ -269,11 +281,22 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }
 
     const setBatchSize = (newValue: number) => {
-        setState((prev) => ({ ...prev, batchSize: newValue }))
+        setLearningSettings((prev) => ({ ...prev, batchSize: newValue }))
     }
 
     const setEpochsNumber = (newValue: number) => {
-        setState((prev) => ({ ...prev, epochs: newValue }))
+        setLearningSettings((prev) => ({ ...prev, epochs: newValue }))
+    }
+
+    const setOptimizerOption = (key: any, newValue: any) => {
+        setState((prev) => {
+            const newState = {
+                ...prev,
+                optimizerOptions: { ...prev.optimizerOptions, [key]: newValue }, // WHY THIS CHANGES NUMBER INTO STRING ????
+            }
+            console.log(newState)
+            return newState
+        })
     }
 
     return (
@@ -281,6 +304,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             value={{
                 trainingLogs,
                 modelSettings: state,
+                learningSettings,
                 isCompiled,
                 isTraining,
                 trainModel,
@@ -295,6 +319,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                 setBatchSize,
                 setEpochsNumber,
                 setOptimizer,
+                setOptimizerOption,
             }}
         >
             {children}

@@ -1,7 +1,7 @@
 // for now
 
-const LENGTH = 50
-const TEST_LENGTH = 10
+const LENGTH = 128
+const TEST_LENGTH = 20
 export const trainX = new Array(LENGTH).fill(0).map((zero, index) => index)
 export const trainY = new Array(LENGTH)
     .fill(0)
