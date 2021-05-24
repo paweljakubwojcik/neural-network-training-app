@@ -1,7 +1,7 @@
 import styled from 'styled-components'
 import { Row } from '../components/Layout'
 import { train } from '@tensorflow/tfjs'
-import { Select, MenuItem, Input, InputLabel, FormControl, TextField } from '@material-ui/core'
+import { Select, MenuItem, Input, InputLabel, FormControl } from '@material-ui/core'
 import { useTensorflow } from '../context/Tensorflow'
 import { LOSSES_FUNCTIONS, METRICS } from '../constants'
 

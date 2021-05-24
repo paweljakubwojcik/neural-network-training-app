@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 
 import { Button, IconButton } from '@material-ui/core'
 import SettingsIcon from '@material-ui/icons/Settings'
@@ -15,6 +15,7 @@ import useChartData from '../hooks/useChartData'
 import { useData } from '../context/Data'
 import ModelOptions from '../containers/ModelOptions'
 import LearningSettings from '../containers/LearningSettings'
+import DataInputForm from '../components/DataInputForm'
 
 export default function Main() {
     const {
@@ -119,6 +120,14 @@ export default function Main() {
                         }}
                         title={'Learning curve'}
                     />
+                    <Row>
+                        <DataInputForm
+                            onUpload={(file) => {
+                                console.log(file)
+                            }}
+                        />
+                    </Row>
+
                     <StyledCard.Header>
                         <h3>Training options</h3>
                     </StyledCard.Header>

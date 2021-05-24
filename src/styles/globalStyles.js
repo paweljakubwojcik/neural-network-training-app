@@ -17,6 +17,9 @@ export const GlobalStyles = createGlobalStyle`
         --background-color: ${(props) => props.theme.palette.background.default};
         --secondary-font-color: ${(props) => props.theme.palette.text.secondary};
         --font-color:${(props) => props.theme.palette.text.primary};
+        --primary-color: ${(props) => props.theme.palette.primary.main};
+        --primary-color-light: ${(props) => props.theme.palette.primary.light};
+        --primary-color-contrastText: ${(props) => props.theme.palette.primary.contrastText};
     }
 
     body {
