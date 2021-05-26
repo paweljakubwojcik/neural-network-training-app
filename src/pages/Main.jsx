@@ -9,8 +9,6 @@ import StyledCard from '../components/StyledCard'
 import { Container, Column, Row } from '../components/Layout'
 import { useTheme } from '@material-ui/core/styles'
 
-import Chart from '../components/Chart'
-
 import { useTensorflow } from '../context/Tensorflow'
 import LayersControls from '../containers/LayersControls'
 import NetworkDiagram from '../components/NetworkDiagram'
@@ -35,7 +33,7 @@ export default function Main() {
         learningSettings: { epochs },
     } = useTensorflow()
 
-    const { test: testData, learning: learningData, setLearningData } = useData()
+    const { learning: learningData, setLearningData } = useData()
 
     const {
         palette: {

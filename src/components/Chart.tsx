@@ -44,10 +44,11 @@ export default forwardRef<HTMLCanvasElement, ChartProps>(function ChartComponent
     if (!id) console.warn('id must be provided on chart component')
 
     useEffect(() => {
-        chartInstance.current.data = data
-        chartInstance.current.options = options
-        chartInstance.current.update('normal')
-    }, [data, options])
+        if (chartInstance.current) {
+            chartInstance.current.data = data
+            chartInstance.current.update('normal')
+        }
+    }, [data])
 
     const canvasRef = useCallback<(instance: HTMLCanvasElement | null) => void>(
         (reference) => {

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState } from 'react'
 import styled from 'styled-components'
 import ChartComponent, { ChartProps, Chart } from '../components/Chart'
 import FullscreenIcon from '@material-ui/icons/Fullscreen'
@@ -8,7 +8,7 @@ import Modal from '@material-ui/core/Modal'
 import StyledCard from '../components/StyledCard'
 import Fade from '@material-ui/core/Fade'
 import Backdrop from '@material-ui/core/Backdrop'
-import { Button, useTheme } from '@material-ui/core'
+import { Button } from '@material-ui/core'
 
 interface ChartContainerProps extends ChartProps {
     title: string
@@ -23,8 +23,6 @@ export default function ChartContainer({
     ...props
 }: ChartContainerProps) {
     const [modalOpen, setModaleOpen] = useState(false)
-
-    const canvasInstance = useRef<HTMLCanvasElement>(null)
 
     const MODAL_CHART_ID = `${id}-modal`
 
@@ -71,7 +69,6 @@ export default function ChartContainer({
                             options={options}
                             id={MODAL_CHART_ID}
                             type={type}
-                            ref={canvasInstance}
                         />
                         <Button
                             variant="contained"
