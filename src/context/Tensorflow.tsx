@@ -247,7 +247,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
 
         model.current.compile({
             optimizer: optimizer(...Object.values(optimizerOptions)),
-            loss, // taka fcn jest w instrukcji
+            loss: tf.losses[loss] as any, // taka fcn jest w instrukcji
             metrics: tf.metrics[metric],
         })
         setCompiled(true)
@@ -260,27 +260,32 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         const learningInput = normalize ? learning.x : learning.unNormalized.x
         const learningLabels = normalize ? learning.y : learning.unNormalized.y
         setTraining(true)
-        await model.current.fit(learningInput, learningLabels, {
-            batchSize,
-            epochs,
-            initialEpoch: trainingLogs.length,
-            shuffle: true,
-            validationSplit: 0.1,
-            callbacks: {
-                onEpochEnd: async (epoch, logs) => {
-                    setTrainingLogs((prev) => [
-                        ...prev,
-                        { x: epoch, y: logs ? logs[modelSettings.metric] : 0 },
-                    ])
-                    console.log(logs)
-                    // when fullfilling the training goal
-                    /* if (epoch === 2) {
+        try {
+            await model.current.fit(learningInput, learningLabels, {
+                batchSize,
+                epochs,
+                initialEpoch: trainingLogs.length,
+                shuffle: true,
+                validationSplit: 0.1,
+                callbacks: {
+                    onEpochEnd: async (epoch, logs) => {
+                        setTrainingLogs((prev) => [
+                            ...prev,
+                            { x: epoch, y: logs ? logs[modelSettings.metric] : 0 },
+                        ])
+                        console.log(logs)
+                        // when fullfilling the training goal
+                        /* if (epoch === 2) {
                         model.stopTraining = true
                     } */
+                    },
                 },
-            },
-        })
-        setTraining(false)
+            })
+        } catch (e) {
+            throw e
+        } finally {
+            setTraining(false)
+        }
     }, [
         learning.unNormalized.x,
         learning.unNormalized.y,

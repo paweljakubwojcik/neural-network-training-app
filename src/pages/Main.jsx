@@ -100,7 +100,7 @@ export default function Main() {
                         >
                             {isCompiled ? 'Compiled' : 'Compile model'}
                         </Button>
-                        <Button color="primary" onClick={() => console.log('randomize weights')}>
+                        <Button color="primary" onClick={compileModel}>
                             Reset model
                         </Button>
                     </Row>
@@ -136,7 +136,7 @@ export default function Main() {
                             animation: false,
                             scales: {
                                 x: {
-                                    max: epochs,
+                                    max: epochs > 0 ? epochs : 1,
                                     min: 0,
                                 },
                             },

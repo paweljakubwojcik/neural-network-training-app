@@ -9,7 +9,7 @@ const StyledCard = styled(Card)`
     margin: 0.4em;
     width: 100%;
 
-    max-width: 640px;
+    max-width: 600px;
     position: relative;
 `
 
