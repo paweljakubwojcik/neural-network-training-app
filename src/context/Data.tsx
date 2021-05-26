@@ -1,7 +1,8 @@
-import { createContext, useCallback, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode } from 'react'
 import { trainData, testData } from '../util/MockData'
 import * as tf from '@tensorflow/tfjs'
 import { ScatterDataPoint } from 'chart.js'
+import normalizeTensor from '../util/normalizeTensor'
 
 type Data = {
     x: tf.Tensor
@@ -11,12 +12,15 @@ type Data = {
     labelMax: tf.Tensor
     labelMin: tf.Tensor
     scatter: ScatterDataPoint[]
-    // Return the min/max bounds so we can use them later.
+    unNormalized: {
+        x: tf.Tensor
+        y: tf.Tensor
+    }
 }
 
 // DATA NEED TO BE NORMALISED
 //TODO: make it so x and y can have more dimensions
-const normaliseData = (data: number[][]) => {
+const createData = (data: number[][]) => {
     const scatter = data.map(([x, y]) => ({ x, y }))
     const tensors = tf.tidy(() => {
         tf.util.shuffle(data)
@@ -27,13 +31,16 @@ const normaliseData = (data: number[][]) => {
         const inputTensor = tf.tensor2d(inputs, [inputs.length, 1])
         const labelTensor = tf.tensor2d(labels, [labels.length, 1])
 
-        const inputMax = inputTensor.max()
-        const inputMin = inputTensor.min()
-        const labelMax = labelTensor.max()
-        const labelMin = labelTensor.min()
-
-        const normalizedInputs = inputTensor.sub(inputMin).div(inputMax.sub(inputMin))
-        const normalizedLabels = labelTensor.sub(labelMin).div(labelMax.sub(labelMin))
+        const {
+            normalizedTensor: normalizedInputs,
+            Min: inputMin,
+            Max: inputMax,
+        } = normalizeTensor(inputTensor)
+        const {
+            normalizedTensor: normalizedLabels,
+            Min: labelMin,
+            Max: labelMax,
+        } = normalizeTensor(labelTensor)
 
         return {
             x: normalizedInputs,
@@ -42,6 +49,10 @@ const normaliseData = (data: number[][]) => {
             inputMin,
             labelMax,
             labelMin,
+            unNormalized: {
+                x: inputTensor,
+                y: labelTensor,
+            },
         }
     })
 
@@ -64,9 +75,9 @@ type DataState = {
 }
 
 const initialState: DataState = {
-    learning: normaliseData(trainData),
+    learning: createData(trainData),
     /*  validation: tensor(trainData), */
-    test: normaliseData(testData),
+    test: createData(testData),
     setLearningData: (data: number[][]) => {},
     /*   setValidationData: (data: number[][]) => {}, */
     setTestData: (data: number[][]) => {},
@@ -83,11 +94,11 @@ function DataProvider({ children, ...props }: { children: ReactNode }) {
     /*  const [validation, setValidation] = useState(initialState.validation) */
     const [test, setTest] = useState(initialState.test)
 
-    const setLearningData = (data: number[][]) => setLearning(normaliseData(data))
+    const setLearningData = (data: number[][]) => setLearning(createData(data))
 
     /* const setValidationData = (data) => setValidation(new Data(data)) */
 
-    const setTestData = (data: number[][]) => setTest(normaliseData(data))
+    const setTestData = (data: number[][]) => setTest(createData(data))
 
     return (
         <DataContext.Provider

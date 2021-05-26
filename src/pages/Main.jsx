@@ -160,10 +160,10 @@ export default function Main() {
             </Column>
             {/* Evaulation section */}
             <Column>
-                <Column.Header>Evaluation</Column.Header>
+                <Column.Header>Evaulation</Column.Header>
                 <StyledCard /* style={{ width: '50%', marginRight: 'auto', marginLeft: 0 }} */>
                     <StyledCard.Header>
-                        <h2>Validation data</h2>
+                        <h2>Test data</h2>
                     </StyledCard.Header>
                     <Row>
                         <DataInputForm

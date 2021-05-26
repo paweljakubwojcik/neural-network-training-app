@@ -10,6 +10,7 @@ import React, {
 import * as tf from '@tensorflow/tfjs'
 
 import getParamNames from '../util/getParamNames'
+import unNormalizeTensor from '../util/unNormalizeTensor'
 
 import {
     MIN_UNITS,
@@ -24,6 +25,7 @@ import {
 import { Optimizer, Sequential, train } from '@tensorflow/tfjs'
 import type { ScatterDataPoint } from 'chart.js'
 import { useData } from './Data'
+import LearningSettings from '../containers/LearningSettings'
 
 type ActivationIdentifier = typeof ACTIVATION_IDENTIFIRES[number]
 type OptimizerType = keyof typeof train
@@ -47,6 +49,7 @@ export interface ModelSettings {
 export interface LearningSettings {
     batchSize: number
     epochs: number
+    normalize: boolean
 }
 
 const defaultOptimizerOptions: {
@@ -100,6 +103,7 @@ const initialModelSettings: ModelSettings = {
 const initialLearningSettings: LearningSettings = {
     batchSize: 32,
     epochs: 100,
+    normalize: true,
 }
 
 //TODO: define data interfaces or types
@@ -120,8 +124,7 @@ type TensorflowContextType = {
     removeLayer: () => void
     setActivationFunction: (layerName: string, newValue: ActivationIdentifier) => void
     stopTraining: () => void
-    setBatchSize: (batchSize: number) => void
-    setEpochsNumber: (epochs: number) => void
+    setLearningOption: (option: { [k in keyof LearningSettings]?: LearningSettings[k] }) => void
     setOptimizer: (newOptimazer: OptimizerType) => void
     setOptimizerOption: (key: string, newValue: any) => void
     setLoss: (newValue: LossesType) => void
@@ -143,8 +146,7 @@ const TensorflowContext = createContext<TensorflowContextType>({
     removeLayer: () => {},
     setActivationFunction: (layerName: string, newValue: ActivationIdentifier) => {},
     stopTraining: () => {},
-    setBatchSize: (batchSize: number) => {},
-    setEpochsNumber: (epochs: number) => {},
+    setLearningOption: () => {},
     setOptimizer: (newOptimazer: OptimizerType) => {},
     setOptimizerOption: (key: string, newValue: any) => {},
     setLoss: (newValue: LossesType) => {},
@@ -267,9 +269,11 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }, [modelSettings])
 
     const trainModel = useCallback(async () => {
-        const { epochs, batchSize } = learningSettings
+        const { epochs, batchSize, normalize } = learningSettings
+        const learningInput = normalize ? learning.x : learning.unNormalized.x
+        const learningLabels = normalize ? learning.y : learning.unNormalized.y
         setTraining(true)
-        await model.current.fit(learning.x, learning.y, {
+        await model.current.fit(learningInput, learningLabels, {
             batchSize,
             epochs,
             initialEpoch: trainingLogs.length,
@@ -298,13 +302,19 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }, [model])
 
     const evaulateData = async () => {
+        const { normalize } = learningSettings
+
+        const testData = normalize ? test.x : test.unNormalized.x
+
         const predictedTensor = model.current.predict(test.x) as tf.Tensor
 
-        const unNormPrediction = predictedTensor
-            .mul(learning.labelMax.sub(learning.labelMin))
-            .add(learning.labelMin)
+        const unNormPrediction = normalize
+            ? unNormalizeTensor(predictedTensor, learning.labelMax, learning.labelMin)
+            : predictedTensor
 
-        const unNormX = test.x.mul(test.inputMax.sub(test.inputMin)).add(test.inputMin)
+        const unNormX = normalize
+            ? unNormalizeTensor(testData, test.inputMax, test.inputMin)
+            : testData
 
         const prediction = (await unNormPrediction.array()) as []
         const testArray = (await unNormX.array()) as []
@@ -315,12 +325,10 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         }))
     }
 
-    const setBatchSize = (newValue: number) => {
-        setLearningSettings((prev) => ({ ...prev, batchSize: newValue }))
-    }
-
-    const setEpochsNumber = (newValue: number) => {
-        setLearningSettings((prev) => ({ ...prev, epochs: newValue }))
+    const setLearningOption = (
+        options: { [k in keyof LearningSettings]?: LearningSettings[k] }
+    ) => {
+        setLearningSettings((prev) => ({ ...prev, ...options }))
     }
 
     const setOptimizerOption = (key: any, newValue: any) => {
@@ -362,8 +370,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                 removeLayer,
                 setActivationFunction,
                 stopTraining,
-                setBatchSize,
-                setEpochsNumber,
+                setLearningOption,
                 setOptimizer,
                 setOptimizerOption,
                 setLoss,

@@ -1,12 +1,11 @@
-import { TextField } from '@material-ui/core'
+import { Checkbox, FormControlLabel, TextField } from '@material-ui/core'
 import { Row } from '../components/Layout'
 import { useTensorflow } from '../context/Tensorflow'
 
 export default function LearningSettings() {
     const {
-        learningSettings: { batchSize, epochs },
-        setEpochsNumber,
-        setBatchSize,
+        learningSettings: { batchSize, epochs, normalize },
+        setLearningOption,
     } = useTensorflow()
 
     return (
@@ -18,7 +17,7 @@ export default function LearningSettings() {
                     type="number"
                     value={epochs.toString()}
                     onChange={(e) => {
-                        setEpochsNumber(e.target.valueAsNumber)
+                        setLearningOption({ epochs: e.target.valueAsNumber })
                     }}
                 />
                 <TextField
@@ -27,8 +26,21 @@ export default function LearningSettings() {
                     type="number"
                     value={batchSize.toString()}
                     onChange={(e) => {
-                        setBatchSize(e.target.valueAsNumber)
+                        setLearningOption({ batchSize: e.target.valueAsNumber })
                     }}
+                />
+                <FormControlLabel
+                    control={
+                        <Checkbox
+                            color="primary"
+                            checked={normalize}
+                            onChange={() => {
+                                setLearningOption({ normalize: !normalize })
+                            }}
+                            name="Normalize"
+                        />
+                    }
+                    label="Normalize data"
                 />
             </Row>
         </>
