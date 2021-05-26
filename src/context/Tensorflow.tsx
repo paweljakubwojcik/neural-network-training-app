@@ -68,20 +68,8 @@ const initialModelSettings: ModelSettings = {
         },
         {
             name: 'Hidden Layer 1',
-            units: 10,
-            activation: 'sigmoid',
-            adjustable: true,
-        },
-        {
-            name: 'Hidden Layer 2',
-            units: 10,
-            activation: 'sigmoid',
-            adjustable: true,
-        },
-        {
-            name: 'Hidden Layer 3',
-            units: 10,
-            activation: 'sigmoid',
+            units: 4,
+            activation: 'linear',
             adjustable: true,
         },
         {
@@ -293,7 +281,15 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             },
         })
         setTraining(false)
-    }, [learning.unNormalized.x, learning.unNormalized.y, learning.x, learning.y, learningSettings, modelSettings.metric, trainingLogs.length])
+    }, [
+        learning.unNormalized.x,
+        learning.unNormalized.y,
+        learning.x,
+        learning.y,
+        learningSettings,
+        modelSettings.metric,
+        trainingLogs.length,
+    ])
 
     const stopTraining = useCallback(() => {
         model.current.stopTraining = true
