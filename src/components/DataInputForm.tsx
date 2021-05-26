@@ -26,7 +26,7 @@ export default function DataInputForm({ name, value, onChange, onUpload }: DataI
     }
 
     return (
-        <Wrapper>
+        <>
             <FileInput
                 name={name}
                 helperText="drop data here"
@@ -37,7 +37,7 @@ export default function DataInputForm({ name, value, onChange, onUpload }: DataI
                 {'Load data'}
             </Button>
             <UploadedFile>{fileName}</UploadedFile>
-        </Wrapper>
+        </>
     )
 }
 

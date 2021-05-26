@@ -19,15 +19,18 @@ const FileInput = forwardRef(
         const handleBodyDrag = (e: DragEvent) => {
             if (e.type === 'dragenter') setFileInputVis(true)
             if (e.type === 'dragleave' && !e.relatedTarget) setFileInputVis(false)
+            if (e.type === 'drop') setFileInputVis(false)
         }
 
         useEffect(() => {
-            document.body.addEventListener('dragleave', handleBodyDrag)
-            document.body.addEventListener('dragenter', handleBodyDrag)
+            document.addEventListener('dragleave', handleBodyDrag)
+            document.addEventListener('dragenter', handleBodyDrag)
+            document.addEventListener('drop', handleBodyDrag)
 
             return () => {
-                document.body.removeEventListener('dragenter', handleBodyDrag)
-                document.body.removeEventListener('dragleave', handleBodyDrag)
+                document.removeEventListener('dragenter', handleBodyDrag)
+                document.removeEventListener('dragleave', handleBodyDrag)
+                document.removeEventListener('drop', handleBodyDrag)
             }
         }, [])
 
@@ -40,12 +43,8 @@ const FileInput = forwardRef(
                     name={name}
                     id="file"
                     type="file"
-                    accept=".mat"
-                    onChange={(e) => {
-                        setFileInputVis(false)
-                        setFileInputHover(false)
-                        if (onChange) onChange(e)
-                    }}
+                    accept=".mat, .csv"
+                    onChange={onChange}
                     onDragEnter={() => {
                         setFileInputHover(true)
                     }}
@@ -77,7 +76,7 @@ const StyledInput = styled.input<{
     width: 100%;
     height: 100%;
 
-    z-index: ${(props) => (props.$visibility ? '2' : '-1')};
+    z-index: ${(props) => (props.$visibility ? '1' : '-1')};
 `
 
 const Label = styled.label<{

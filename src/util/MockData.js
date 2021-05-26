@@ -1,17 +1,17 @@
 // for now
 
 const LENGTH = 100
+const VALIDATION_SPLIT = 0.1
 const TEST_LENGTH = 10
-export const trainX = new Array(LENGTH).fill(0).map((zero, index) => index)
-export const trainY = new Array(LENGTH)
-    .fill(0)
-    .map((zero, index) => index / LENGTH + Math.random() * 0.2 - 0.1)
 
-let trainData = []
-for (let i = 0; i < trainY.length; i++) {
-    trainData.push({ x: trainX[i], y: trainY[i] })
-}
+const noise = (level) => Math.random() * 2 * level - level
+const linearF = (x, a, b) => x * a + b + noise(0.1)
 
-export const testData = new Array(TEST_LENGTH).fill(0).map((_, i) => (LENGTH / TEST_LENGTH) * i)
+const expF = (x, a, b) => Math.pow(a * x + noise(0.3), 2)
 
-export default trainData
+const trainX = new Array(LENGTH).fill(0).map((zero, index) => index)
+const trainData = trainX.map((x, index) => [x, expF(x, 0.05, 0)])
+
+const testData = new Array(TEST_LENGTH).fill(0).map((_, i) => [10 * i])
+
+export { trainData, testData }

@@ -9,7 +9,6 @@ import React, {
 } from 'react'
 import * as tf from '@tensorflow/tfjs'
 
-import { trainX, trainY } from '../util/MockData'
 import getParamNames from '../util/getParamNames'
 
 import {
@@ -24,6 +23,7 @@ import {
 
 import { Optimizer, Sequential, train } from '@tensorflow/tfjs'
 import type { ScatterDataPoint } from 'chart.js'
+import { useData } from './Data'
 
 type ActivationIdentifier = typeof ACTIVATION_IDENTIFIRES[number]
 type OptimizerType = keyof typeof train
@@ -36,7 +36,7 @@ export interface ModelSettings {
     layers: {
         name: string
         units: number
-        activation: ActivationIdentifier | undefined
+        activation?: ActivationIdentifier
         adjustable: boolean
     }[]
     optimizer: OptimizerConstructor
@@ -66,15 +66,27 @@ const initialModelSettings: ModelSettings = {
         },
         {
             name: 'Hidden Layer 1',
-            units: 2,
-            activation: 'linear',
+            units: 10,
+            activation: 'sigmoid',
+            adjustable: true,
+        },
+        {
+            name: 'Hidden Layer 2',
+            units: 10,
+            activation: 'sigmoid',
+            adjustable: true,
+        },
+        {
+            name: 'Hidden Layer 3',
+            units: 10,
+            activation: 'sigmoid',
             adjustable: true,
         },
         {
             name: 'Output Layer',
             units: 1,
-            activation: 'linear',
             adjustable: true,
+            activation: 'linear',
         },
     ],
     optimizer: train.sgd as unknown as OptimizerConstructor,
@@ -86,7 +98,7 @@ const initialModelSettings: ModelSettings = {
 }
 
 const initialLearningSettings: LearningSettings = {
-    batchSize: 128,
+    batchSize: 32,
     epochs: 100,
 }
 
@@ -140,7 +152,9 @@ const TensorflowContext = createContext<TensorflowContextType>({
 })
 
 function TensorflowProvider({ children }: { children: ReactNode }) {
-    const [trainingLogs, setTrainingLogs] = useState<ScatterDataPoint[]>([]) // FIXME: this doesn't make sense now,
+    const { learning, test } = useData()
+
+    const [trainingLogs, setTrainingLogs] = useState<ScatterDataPoint[]>([])
 
     const model = useRef<Sequential>(tf.sequential())
 
@@ -148,16 +162,16 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     const [isTraining, setTraining] = useState(false)
 
     // possibly change it to hook
-    const [state, setState] = useState(initialModelSettings)
+    const [modelSettings, setModelSettings] = useState(initialModelSettings)
     const [learningSettings, setLearningSettings] = useState(initialLearningSettings)
 
     // when any setting is change model needs to be compiled again
     useEffect(() => {
         setCompiled(false)
-    }, [state])
+    }, [modelSettings])
 
     const incrementLayerUnits = useCallback((layerName: string) => {
-        setState((state) => {
+        setModelSettings((state) => {
             const layerToChange = state.layers.find((layer) => layer.name === layerName)!
             if (layerToChange.units >= MAX_UNITS) return state
             layerToChange.units++
@@ -166,7 +180,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const decrementLayerUnits = useCallback((layerName) => {
-        setState((state) => {
+        setModelSettings((state) => {
             const layerToChange = state.layers.find((layer) => layer.name === layerName)!
             if (layerToChange.units <= MIN_UNITS) return state
             layerToChange.units--
@@ -175,7 +189,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const addLayer = useCallback(() => {
-        setState((state) => {
+        setModelSettings((state) => {
             if (state.layers.length >= MAX_LAYERS) return state
             state.layers.splice(-1, 0, {
                 name: `Hidden Layer ${state.layers.length - 1}`,
@@ -188,7 +202,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const removeLayer = useCallback(() => {
-        setState((state) => {
+        setModelSettings((state) => {
             if (state.layers.length <= MIN_LAYERS) return state
             state.layers.splice(-2, 1)
             return { ...state }
@@ -196,7 +210,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }, [])
 
     const setActivationFunction = (layerName: string, newValue: ActivationIdentifier) => {
-        setState((state) => {
+        setModelSettings((state) => {
             const layerToChange = state.layers.find((layer) => layer.name === layerName)!
             layerToChange.activation = newValue
             return { ...state }
@@ -220,7 +234,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             })
         )
 
-        setState((state) => ({
+        setModelSettings((state) => ({
             ...state,
             optimizer,
             optimizerOptions,
@@ -228,13 +242,13 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }
 
     const compileModel = useCallback(async () => {
-        const { layers, optimizer, optimizerOptions, loss, metric } = state
+        const { layers, optimizer, optimizerOptions, loss, metric } = modelSettings
         setTrainingLogs([])
 
         model.current = tf.sequential({
             layers: layers.map(({ units, activation }, index) =>
                 tf.layers.dense({
-                    inputShape: index === 0 ? [units] : undefined,
+                    inputShape: index === 0 ? [1] : undefined,
                     units,
                     activation,
                     /*  useBias: false, */
@@ -250,12 +264,12 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         setCompiled(true)
         console.log('%cModel compiled succesfully', 'font-weight: bold; font-size: 16px;')
         model.current.summary()
-    }, [state])
+    }, [modelSettings])
 
     const trainModel = useCallback(async () => {
         const { epochs, batchSize } = learningSettings
         setTraining(true)
-        await model.current.fit(tf.tensor(trainX), tf.tensor(trainY), {
+        await model.current.fit(learning.x, learning.y, {
             batchSize,
             epochs,
             initialEpoch: trainingLogs.length,
@@ -265,7 +279,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                 onEpochEnd: async (epoch, logs) => {
                     setTrainingLogs((prev) => [
                         ...prev,
-                        { x: epoch, y: logs ? logs[state.metric] : 0 },
+                        { x: epoch, y: logs ? logs[modelSettings.metric] : 0 },
                     ])
                     console.log(logs)
                     // when fullfilling the training goal
@@ -276,19 +290,28 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             },
         })
         setTraining(false)
-    }, [learningSettings, state.metric, trainingLogs.length])
+    }, [learning.x, learning.y, learningSettings, modelSettings.metric, trainingLogs.length])
 
     const stopTraining = useCallback(() => {
         model.current.stopTraining = true
         setTraining(false)
     }, [model])
 
-    const evaulateData = async (data: any) => {
-        const predictedTensor = model.current.predict(tf.tensor(data)) as tf.Tensor
-        const prediction = (await predictedTensor.array()) as []
+    const evaulateData = async () => {
+        const predictedTensor = model.current.predict(test.x) as tf.Tensor
+
+        const unNormPrediction = predictedTensor
+            .mul(learning.labelMax.sub(learning.labelMin))
+            .add(learning.labelMin)
+
+        const unNormX = test.x.mul(test.inputMax.sub(test.inputMin)).add(test.inputMin)
+
+        const prediction = (await unNormPrediction.array()) as []
+        const testArray = (await unNormX.array()) as []
+
         return prediction.map((predicted: number, index: number) => ({
             y: predicted,
-            x: data[index],
+            x: testArray[index],
         }))
     }
 
@@ -301,10 +324,10 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }
 
     const setOptimizerOption = (key: any, newValue: any) => {
-        setState((prev) => {
+        setModelSettings((prev) => {
             const newState = {
                 ...prev,
-                optimizerOptions: { ...prev.optimizerOptions, [key]: newValue }, // WHY THIS CHANGES NUMBER INTO STRING ????
+                optimizerOptions: { ...prev.optimizerOptions, [key]: newValue },
             }
             console.log(newState)
             return newState
@@ -312,12 +335,12 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }
 
     const setLoss = (newValue: LossesType) => {
-        setState((prev) => {
+        setModelSettings((prev) => {
             return { ...prev, loss: newValue }
         })
     }
     const setMetric = (newValue: MetricType) => {
-        setState((prev) => {
+        setModelSettings((prev) => {
             return { ...prev, metric: newValue }
         })
     }
@@ -326,7 +349,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         <TensorflowContext.Provider
             value={{
                 trainingLogs,
-                modelSettings: state,
+                modelSettings,
                 learningSettings,
                 isCompiled,
                 isTraining,

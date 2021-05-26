@@ -16,6 +16,7 @@ import { useData } from '../context/Data'
 import ModelOptions from '../containers/ModelOptions'
 import LearningSettings from '../containers/LearningSettings'
 import DataInputForm from '../components/DataInputForm'
+import { getDataFromCSVFile } from '../util/dataConverter'
 
 export default function Main() {
     const {
@@ -30,7 +31,8 @@ export default function Main() {
         learningSettings: { epochs },
     } = useTensorflow()
 
-    const { test: testData, learning: learningData } = useData()
+    const { test: testData, learning: learningData, setLearningData } = useData()
+    console.log({ testData, learningData })
 
     const {
         palette: {
@@ -43,14 +45,14 @@ export default function Main() {
 
     const pointData = useChartData({
         datasets: [
-            { data: learningData, label: 'Learning data' },
+            { data: learningData.scatter, label: 'Learning data' },
             {
                 data: predictedData,
                 label: 'Prediction',
                 showLine: true,
                 backgroundColor: SecondaryColor,
-                pointBackgroundColor: SecondaryColor,
                 borderColor: SecondaryColor,
+                pointRadius: 1,
             },
         ],
     })
@@ -79,8 +81,11 @@ export default function Main() {
                             <SettingsIcon />
                         </IconButton>
                     </StyledCard.Header>
+
                     <NetworkDiagram layers={layers.map((layer) => layer.units)} color={MainColor} />
+
                     <LayersControls />
+
                     <StyledCard.Header>
                         <h2>Model options</h2>
                     </StyledCard.Header>
@@ -103,6 +108,22 @@ export default function Main() {
             {/* Training section */}
             <Column>
                 <Column.Header>Training</Column.Header>
+
+                <StyledCard>
+                    <StyledCard.Header>
+                        <h2>Training data</h2>
+                    </StyledCard.Header>
+
+                    <Row>
+                        <DataInputForm
+                            onUpload={async (file) => {
+                                const data = await getDataFromCSVFile(file)
+                                setLearningData(data)
+                            }}
+                        />
+                    </Row>
+                </StyledCard>
+
                 <StyledCard>
                     <StyledCard.Header>
                         <h2>Learning curve</h2>
@@ -120,13 +141,6 @@ export default function Main() {
                         }}
                         title={'Learning curve'}
                     />
-                    <Row>
-                        <DataInputForm
-                            onUpload={(file) => {
-                                console.log(file)
-                            }}
-                        />
-                    </Row>
 
                     <StyledCard.Header>
                         <h3>Training options</h3>
@@ -147,6 +161,18 @@ export default function Main() {
             {/* Evaulation section */}
             <Column>
                 <Column.Header>Evaluation</Column.Header>
+                <StyledCard /* style={{ width: '50%', marginRight: 'auto', marginLeft: 0 }} */>
+                    <StyledCard.Header>
+                        <h2>Validation data</h2>
+                    </StyledCard.Header>
+                    <Row>
+                        <DataInputForm
+                            onUpload={async (file) => {
+                                console.log(await getDataFromCSVFile(file))
+                            }}
+                        />
+                    </Row>
+                </StyledCard>
                 <StyledCard>
                     <StyledCard.Header>
                         <h2>Effects</h2>
@@ -156,7 +182,7 @@ export default function Main() {
                         variant="contained"
                         color="primary"
                         onClick={async () => {
-                            setPrediction(await evaulateData(testData))
+                            setPrediction(await evaulateData())
                         }}
                         disabled={!isCompiled}
                     >

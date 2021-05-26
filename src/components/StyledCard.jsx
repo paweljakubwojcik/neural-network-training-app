@@ -8,8 +8,9 @@ const StyledCard = styled(Card)`
     padding: 1em;
     margin: 0.4em;
     width: 100%;
-    min-width: 400px;
+
     max-width: 640px;
+    position: relative;
 `
 
 StyledCard.Header = styled.header`
