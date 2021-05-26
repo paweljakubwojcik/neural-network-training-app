@@ -4,25 +4,43 @@ import styled, { StyledComponent } from 'styled-components'
  * layout flex container
  */
 const Container = styled.div`
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-areas: 'model training evaulation';
+
     align-items: stretch;
-    justify-content: space-evenly;
+    justify-items: stretch;
 
     width: 100%;
     min-height: 100vh;
     padding: 1em;
+
+    @media (max-width: 1700px) {
+        grid-template-areas:
+            'model training'
+            'model evaulation';
+        grid-template-columns: repeat(2, 1fr);
+    }
+    @media (max-width: 1100px) {
+        grid-template-areas:
+            'model'
+            'training'
+            'evaulation';
+        grid-template-columns: repeat(1, 1fr);
+    }
 `
 
 const Column: StyledComponent<'div', any, {}, never> & {
     Header?: StyledComponent<'h1', any, {}, never>
-} = styled.div`
+} = styled.div<{ gridName: string }>`
     display: flex;
     flex-direction: column;
     align-items: center;
-    flex-grow: 1;
-    max-width: 650px;
+    /* flex-grow: 1; */
+    /* max-width: 700px; */
     padding: 0.4em;
+    grid-area: ${(props) => props.gridName};
 `
 
 const Row = styled.div`

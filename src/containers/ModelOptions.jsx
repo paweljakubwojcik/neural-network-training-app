@@ -38,7 +38,7 @@ export default function ModelOptions() {
             </Row>
             <Row style={{ flexWrap: 'wrap', justifyContent: 'start' }}>
                 {learningAlgorithmOptions.map(([key, value]) => (
-                    <FormControl key={key}>
+                    <FormControl key={key} style={{ maxWidth: '50%' }}>
                         <InputLabel id={key}>{key}</InputLabel>
                         {typeof value === 'number' && (
                             <Input

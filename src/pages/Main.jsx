@@ -73,7 +73,7 @@ export default function Main() {
     return (
         <Container>
             {/* Model section */}
-            <Column>
+            <Column gridName={'model'}>
                 <Column.Header>Model</Column.Header>
                 <StyledCard>
                     <StyledCard.Header>
@@ -108,7 +108,7 @@ export default function Main() {
             </Column>
 
             {/* Training section */}
-            <Column>
+            <Column gridName={'training'}>
                 <Column.Header>Training</Column.Header>
 
                 <StyledCard>
@@ -163,7 +163,7 @@ export default function Main() {
                 </StyledCard>
             </Column>
             {/* Evaulation section */}
-            <Column>
+            <Column gridName={'evaulation'}>
                 <Column.Header>Evaulation</Column.Header>
                 <StyledCard /* style={{ width: '50%', marginRight: 'auto', marginLeft: 0 }} */>
                     <StyledCard.Header>
