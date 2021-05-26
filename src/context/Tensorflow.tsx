@@ -25,7 +25,6 @@ import {
 import { Optimizer, Sequential, train } from '@tensorflow/tfjs'
 import type { ScatterDataPoint } from 'chart.js'
 import { useData } from './Data'
-import LearningSettings from '../containers/LearningSettings'
 
 type ActivationIdentifier = typeof ACTIVATION_IDENTIFIRES[number]
 type OptimizerType = keyof typeof train
@@ -294,7 +293,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             },
         })
         setTraining(false)
-    }, [learning.x, learning.y, learningSettings, modelSettings.metric, trainingLogs.length])
+    }, [learning.unNormalized.x, learning.unNormalized.y, learning.x, learning.y, learningSettings, modelSettings.metric, trainingLogs.length])
 
     const stopTraining = useCallback(() => {
         model.current.stopTraining = true

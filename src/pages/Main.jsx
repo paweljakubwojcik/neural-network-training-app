@@ -2,6 +2,9 @@ import React, { useState } from 'react'
 
 import { Button, IconButton } from '@material-ui/core'
 import SettingsIcon from '@material-ui/icons/Settings'
+import PlayArrowIcon from '@material-ui/icons/PlayArrow'
+import PauseIcon from '@material-ui/icons/Pause'
+
 import StyledCard from '../components/StyledCard'
 import { Container, Column, Row } from '../components/Layout'
 import { useTheme } from '@material-ui/core/styles'
@@ -17,6 +20,7 @@ import ModelOptions from '../containers/ModelOptions'
 import LearningSettings from '../containers/LearningSettings'
 import DataInputForm from '../components/DataInputForm'
 import { getDataFromCSVFile } from '../util/dataConverter'
+import ChartContainer from '../containers/ChartContainer'
 
 export default function Main() {
     const {
@@ -32,7 +36,6 @@ export default function Main() {
     } = useTensorflow()
 
     const { test: testData, learning: learningData, setLearningData } = useData()
-    console.log({ testData, learningData })
 
     const {
         palette: {
@@ -105,6 +108,7 @@ export default function Main() {
                     </Row>
                 </StyledCard>
             </Column>
+
             {/* Training section */}
             <Column>
                 <Column.Header>Training</Column.Header>
@@ -128,7 +132,7 @@ export default function Main() {
                     <StyledCard.Header>
                         <h2>Learning curve</h2>
                     </StyledCard.Header>
-                    <Chart
+                    <ChartContainer
                         data={trainingData}
                         options={{
                             animation: false,
@@ -140,6 +144,7 @@ export default function Main() {
                             },
                         }}
                         title={'Learning curve'}
+                        id={'LearningCurve'}
                     />
 
                     <StyledCard.Header>
@@ -151,6 +156,7 @@ export default function Main() {
                             variant="contained"
                             color="primary"
                             onClick={isTraining ? stopTraining : trainModel}
+                            endIcon={isTraining ? <PauseIcon /> : <PlayArrowIcon />}
                             disabled={!isCompiled}
                         >
                             {isTraining ? 'stop' : 'Train'}
@@ -177,7 +183,11 @@ export default function Main() {
                     <StyledCard.Header>
                         <h2>Effects</h2>
                     </StyledCard.Header>
-                    <Chart data={pointData} title={'Evaluation Chart'} />
+                    <ChartContainer
+                        data={pointData}
+                        title={'Evaluation Chart'}
+                        id={'Evaluation Chart'}
+                    />
                     <Button
                         variant="contained"
                         color="primary"
