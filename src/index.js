@@ -1,4 +1,4 @@
-import './wdyr' // <--- first import
+/* import './wdyr' // <--- for debugging only */
 
 import React from 'react'
 import ReactDOM from 'react-dom'

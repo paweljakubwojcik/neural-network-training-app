@@ -97,6 +97,7 @@ const initialLearningSettings: LearningSettings = {
 
 type TensorflowContextType = {
     trainingLogs: ScatterDataPoint[]
+    trainingEffects: ScatterDataPoint[]
     modelSettings: ModelSettings
     learningSettings: LearningSettings
     isCompiled: boolean
@@ -119,6 +120,7 @@ type TensorflowContextType = {
 
 const TensorflowContext = createContext<TensorflowContextType>({
     trainingLogs: [],
+    trainingEffects: [],
     modelSettings: initialModelSettings,
     learningSettings: initialLearningSettings,
     isCompiled: false,
@@ -143,6 +145,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     const { learning, test } = useData()
 
     const [trainingLogs, setTrainingLogs] = useState<ScatterDataPoint[]>([])
+    const [trainingEffects, setTrainingEffects] = useState<ScatterDataPoint[]>([])
 
     const model = useRef<Sequential>(tf.sequential())
 
@@ -263,8 +266,16 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
 
     const trainModel = useCallback(async () => {
         const { epochs, batchSize, normalize } = learningSettings
+
         const learningInput = normalize ? learning.x : learning.unNormalized.x
         const learningLabels = normalize ? learning.y : learning.unNormalized.y
+
+        const GRAIN_LEVEL = 20
+        const MAX_TEST = learningInput.max().arraySync() as number
+        const MIN_TEST = learningInput.min().arraySync() as number
+
+        const testVector = tf.linspace(MAX_TEST, MIN_TEST, GRAIN_LEVEL)
+
         setTraining(true)
         try {
             await model.current.fit(learningInput, learningLabels, {
@@ -279,6 +290,24 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                             ...prev,
                             { x: epoch, y: logs ? logs[modelSettings.metric] : 0 },
                         ])
+                        let predictedTensor = model.current.predict(testVector) as tf.Tensor
+                        if (normalize)
+                            predictedTensor = unNormalizeTensor(
+                                predictedTensor,
+                                learning.labelMin,
+                                learning.labelMax
+                            )
+                        setTrainingEffects(() => {
+                            const predictedArray = predictedTensor.arraySync() as number[]
+                            const testArray = normalize
+                                ? (unNormalizeTensor(
+                                      testVector,
+                                      learning.inputMin,
+                                      learning.inputMax
+                                  ).arraySync() as number[])
+                                : testVector.arraySync()
+                            return predictedArray.map((y, i) => ({ y, x: testArray[i] }))
+                        })
                         /* console.log(logs) */
                         // when fullfilling the training goal
                         /* if (trainingGoal) {
@@ -293,6 +322,10 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             setTraining(false)
         }
     }, [
+        learning.inputMax,
+        learning.inputMin,
+        learning.labelMax,
+        learning.labelMin,
         learning.unNormalized.x,
         learning.unNormalized.y,
         learning.x,
@@ -303,27 +336,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     ])
 
     const evaulateData = async () => {
-        const { normalize } = learningSettings
-
-        const testData = normalize ? test.x : test.unNormalized.x
-
-        const predictedTensor = model.current.predict(test.x) as tf.Tensor
-
-        const unNormPrediction = normalize
-            ? unNormalizeTensor(predictedTensor, learning.labelMax, learning.labelMin)
-            : predictedTensor
-
-        const unNormX = normalize
-            ? unNormalizeTensor(testData, test.inputMax, test.inputMin)
-            : testData
-
-        const prediction = (await unNormPrediction.array()) as []
-        const testArray = (await unNormX.array()) as []
-
-        return prediction.map((predicted: number, index: number) => ({
-            y: predicted,
-            x: testArray[index],
-        }))
+        return [{ x: 0, y: 0 }]
     }
 
     const setLearningOption = (
@@ -358,6 +371,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         <TensorflowContext.Provider
             value={{
                 trainingLogs,
+                trainingEffects,
                 modelSettings,
                 learningSettings,
                 isCompiled,

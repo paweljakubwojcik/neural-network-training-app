@@ -28,13 +28,14 @@ export default function Main() {
         stopTraining,
         compileModel,
         trainingLogs,
+        trainingEffects,
         isCompiled,
         isTraining,
         modelSettings: { layers, metric },
         learningSettings: { epochs },
     } = useTensorflow()
 
-    const { learning: learningData, setLearningData } = useData()
+    const { learning: learningData } = useData()
 
     const {
         palette: {
@@ -49,7 +50,7 @@ export default function Main() {
         datasets: [
             { data: learningData.scatter, label: 'Learning data' },
             {
-                data: predictedData,
+                data: trainingEffects,
                 label: 'Prediction',
                 showLine: true,
                 backgroundColor: SecondaryColor,
@@ -173,6 +174,9 @@ export default function Main() {
                         data={pointData}
                         title={'Evaluation Chart'}
                         id={'Evaluation Chart'}
+                        options={{
+                            animation: false,
+                        }}
                     />
                     <Button
                         variant="contained"
