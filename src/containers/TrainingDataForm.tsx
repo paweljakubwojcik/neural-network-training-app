@@ -1,10 +1,10 @@
-import React, { useRef, useState, ChangeEvent, useEffect, useCallback } from 'react'
+import React, { useRef, useState, ChangeEvent, useCallback } from 'react'
 import StyledCard, { StyledCardHeader } from '../components/StyledCard'
 import { Row } from '../components/Layout'
 
 import { getDataFromCSVFile } from '../util/dataConverter'
 import { useData } from '../context/Data'
-import { Button, MenuItem, Select } from '@material-ui/core'
+import { Button, MenuItem } from '@material-ui/core'
 import FileInput from '../components/FileInput'
 import TextField from '@material-ui/core/TextField'
 import DoneIcon from '@material-ui/icons/Done'
@@ -15,7 +15,7 @@ enum formState {
     MATH = 'MATH',
 }
 
-export default function TrainingDataForm() {
+function TrainingDataForm() {
     const { setLearningData } = useData()
 
     const inputRef = useRef<HTMLInputElement>(null)
@@ -100,6 +100,8 @@ export default function TrainingDataForm() {
     )
 }
 
+export default TrainingDataForm
+
 const getDataType = (url: string) => {
     return url.split('.').reverse()[0]
 }
@@ -111,7 +113,7 @@ const DataFromURLForm = ({
     setFields: (fileds: string[] | undefined) => void
     setData: (data: { [key: string]: string | number }[]) => void
 }) => {
-    const [URL, setURL] = useState('')
+    const [URL, setURL] = useState('https://storage.googleapis.com/tfjs-tutorials/carsData.json')
 
     const handleClick = async () => {
         const res = await fetch(URL, {})
@@ -167,7 +169,9 @@ const ChooseDataForm = ({
                 onChange={(e) => setInput(e.target.value as string)}
             >
                 {fields.map((field) => (
-                    <MenuItem value={field}>{field}</MenuItem>
+                    <MenuItem value={field} key={field}>
+                        {field}
+                    </MenuItem>
                 ))}
             </TextField>
             <TextField
@@ -179,7 +183,9 @@ const ChooseDataForm = ({
                 onChange={(e) => setLabel(e.target.value as string)}
             >
                 {fields.map((field) => (
-                    <MenuItem value={field}>{field}</MenuItem>
+                    <MenuItem value={field} key={field}>
+                        {field}
+                    </MenuItem>
                 ))}
             </TextField>
             <Button onClick={() => loadData(label, input)}>
