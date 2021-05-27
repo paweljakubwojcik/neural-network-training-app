@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react'
+import { createContext, useContext, useState, ReactNode, useCallback } from 'react'
 import { trainData, testData } from '../util/MockData'
 import * as tf from '@tensorflow/tfjs'
 import { ScatterDataPoint } from 'chart.js'
@@ -59,7 +59,7 @@ const createData = (data: number[][]) => {
     return {
         scatter,
         ...tensors,
-    }
+    } as Data
 }
 
 type dataSetter = (data: number[][]) => void
@@ -94,7 +94,7 @@ function DataProvider({ children, ...props }: { children: ReactNode }) {
     /*  const [validation, setValidation] = useState(initialState.validation) */
     const [test, setTest] = useState(initialState.test)
 
-    const setLearningData = (data: number[][]) => setLearning(createData(data))
+    const setLearningData = useCallback((data: number[][]) => setLearning(createData(data)), [])
 
     /* const setValidationData = (data) => setValidation(new Data(data)) */
 

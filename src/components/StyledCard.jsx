@@ -13,10 +13,12 @@ const StyledCard = styled(Card)`
     position: relative;
 `
 
-StyledCard.Header = styled.header`
+export const StyledCardHeader = styled.header`
     display: flex;
     justify-content: space-between;
     width: 100%;
 `
+
+StyledCard.Header = StyledCardHeader
 
 export default StyledCard

@@ -42,14 +42,26 @@ const transposeMatrix = (matrix: number[][]) => {
     )
 }
 
-export const getDataFromCSVFile: (file: File) => Promise<number[][]> = async (file) => {
+export const getDataFromCSVFile: (
+    file: File | string
+) => Promise<{ data: { [key: string]: string | number }[]; fields?: string[] }> = async (
+    file
+) => {
     return new Promise((res, rej) => {
         Papa.parse(file, {
-            complete: ({ data, errors }: ParseResult<number[]>) => {
-                if (errors.length) rej(errors)
-                else res(data)
+            complete: ({
+                data,
+                errors,
+                meta: { fields },
+            }: ParseResult<{ [key: string]: string | number }>) => {
+                if (errors.length) {
+                    console.log(errors)
+                    rej(errors)
+                } else res({ data, fields })
             },
-            transform: (value) => parseFloat(value),
+            transform: (value) => (!isNaN(parseFloat(value)) ? parseFloat(value) : value),
+            header: true,
+            skipEmptyLines: true,
         })
     })
 }

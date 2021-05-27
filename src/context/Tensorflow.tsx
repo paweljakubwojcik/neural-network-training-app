@@ -84,7 +84,7 @@ const initialModelSettings: ModelSettings = {
         learningRate: 0.001,
     },
     loss: 'meanSquaredError',
-    metric: 'meanAbsoluteError',
+    metric: 'meanSquaredError',
 }
 
 const initialLearningSettings: LearningSettings = {
@@ -93,7 +93,6 @@ const initialLearningSettings: LearningSettings = {
     normalize: true,
 }
 
-//TODO: define data interfaces or types
 //TODO: model settings into it's own context, or reducer
 
 type TensorflowContextType = {
@@ -230,9 +229,15 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         }))
     }
 
+    const stopTraining = useCallback(() => {
+        model.current.stopTraining = true
+        setTraining(false)
+    }, [model])
+
     const compileModel = useCallback(async () => {
         const { layers, optimizer, optimizerOptions, loss, metric } = modelSettings
-        setTrainingLogs([])
+
+        if (isTraining) stopTraining()
 
         model.current = tf.sequential({
             layers: layers.map(({ units, activation }, index) =>
@@ -250,10 +255,11 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             loss: tf.losses[loss] as any, // taka fcn jest w instrukcji
             metrics: tf.metrics[metric],
         })
+        setTrainingLogs([])
         setCompiled(true)
         console.log('%cModel compiled succesfully', 'font-weight: bold; font-size: 16px;')
         model.current.summary()
-    }, [modelSettings])
+    }, [isTraining, modelSettings, stopTraining])
 
     const trainModel = useCallback(async () => {
         const { epochs, batchSize, normalize } = learningSettings
@@ -266,16 +272,16 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                 epochs,
                 initialEpoch: trainingLogs.length,
                 shuffle: true,
-                validationSplit: 0.1,
+                validationSplit: 0.2,
                 callbacks: {
                     onEpochEnd: async (epoch, logs) => {
                         setTrainingLogs((prev) => [
                             ...prev,
                             { x: epoch, y: logs ? logs[modelSettings.metric] : 0 },
                         ])
-                        console.log(logs)
+                        /* console.log(logs) */
                         // when fullfilling the training goal
-                        /* if (epoch === 2) {
+                        /* if (trainingGoal) {
                         model.stopTraining = true
                     } */
                     },
@@ -295,11 +301,6 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         modelSettings.metric,
         trainingLogs.length,
     ])
-
-    const stopTraining = useCallback(() => {
-        model.current.stopTraining = true
-        setTraining(false)
-    }, [model])
 
     const evaulateData = async () => {
         const { normalize } = learningSettings

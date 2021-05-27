@@ -19,6 +19,7 @@ import LearningSettings from '../containers/LearningSettings'
 import DataInputForm from '../components/DataInputForm'
 import { getDataFromCSVFile } from '../util/dataConverter'
 import ChartContainer from '../containers/ChartContainer'
+import TrainingDataForm from '../containers/TrainingDataForm'
 
 export default function Main() {
     const {
@@ -111,20 +112,7 @@ export default function Main() {
             <Column gridName={'training'}>
                 <Column.Header>Training</Column.Header>
 
-                <StyledCard>
-                    <StyledCard.Header>
-                        <h2>Training data</h2>
-                    </StyledCard.Header>
-
-                    <Row>
-                        <DataInputForm
-                            onUpload={async (file) => {
-                                const data = await getDataFromCSVFile(file)
-                                setLearningData(data)
-                            }}
-                        />
-                    </Row>
-                </StyledCard>
+                <TrainingDataForm />
 
                 <StyledCard>
                     <StyledCard.Header>
