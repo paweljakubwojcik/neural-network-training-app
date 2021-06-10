@@ -1,6 +1,6 @@
 // for now
 
-const LENGTH = 100
+const LENGTH = 500
 const VALIDATION_SPLIT = 0.1
 const TEST_LENGTH = 10
 
