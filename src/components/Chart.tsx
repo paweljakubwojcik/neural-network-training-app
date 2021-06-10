@@ -67,7 +67,7 @@ export default forwardRef<HTMLCanvasElement, ChartProps>(function ChartComponent
         [data, options, type]
     )
 
-    return <canvas ref={canvasRef} id={id} style={{ backgroundColor: 'white' }}></canvas>
+    return <canvas ref={canvasRef} id={id}></canvas>
 })
 
 export { Chart }
