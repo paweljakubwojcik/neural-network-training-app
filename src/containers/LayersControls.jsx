@@ -10,8 +10,7 @@ import { MIN_UNITS, MAX_UNITS, MAX_LAYERS, MIN_LAYERS, ACTIVATION_IDENTIFIRES } 
 export default function LayersControls() {
     const {
         modelSettings: { layers },
-        incrementLayerUnits,
-        decrementLayerUnits,
+        setLayersUnits,
         addLayer,
         setActivationFunction,
         removeLayer,
@@ -34,8 +33,7 @@ export default function LayersControls() {
             {layer.adjustable && (
                 <CounterControl
                     count={layer.units}
-                    up={() => incrementLayerUnits(layer.name)}
-                    down={() => decrementLayerUnits(layer.name)}
+                    setCounter={(value) => setLayersUnits(layer.name, value)}
                     max={MAX_UNITS}
                     min={MIN_UNITS}
                 />
