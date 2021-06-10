@@ -16,7 +16,7 @@ enum formState {
 }
 
 function TrainingDataForm() {
-    const { setLearningData } = useData()
+    const { learningData } = useData()
 
     const inputRef = useRef<HTMLInputElement>(null)
     const [fileName, setFileName] = useState<string>()
@@ -25,8 +25,6 @@ function TrainingDataForm() {
 
     const [fields, setFields] = useState<string[] | undefined>()
     const [data, setData] = useState<{ [key: string]: any }[]>([{}])
-
-    console.log(data)
 
     const handleUpload = async (e: ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.item(0)
@@ -40,10 +38,14 @@ function TrainingDataForm() {
 
     const loadData = useCallback(
         (label: string, input: string) => {
-            const wantedData = data.map((dataPoint) => [dataPoint[input], dataPoint[label]])
-            setLearningData(wantedData as number[][])
+            learningData.addInput({
+                [input]: data.map((dataPoint) => dataPoint[input]),
+            })
+            learningData.addLabel({
+                [label]: data.map((dataPoint) => dataPoint[label]),
+            })
         },
-        [data, setLearningData]
+        [data, learningData]
     )
 
     return (

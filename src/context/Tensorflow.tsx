@@ -25,6 +25,7 @@ import {
 import { Optimizer, Sequential, train } from '@tensorflow/tfjs'
 import type { ScatterDataPoint } from 'chart.js'
 import { useData } from './Data'
+import normalizeTensor from '../util/normalizeTensor'
 
 type ActivationIdentifier = typeof ACTIVATION_IDENTIFIRES[number]
 type OptimizerType = keyof typeof train
@@ -95,32 +96,10 @@ const initialLearningSettings: LearningSettings = {
 
 //TODO: model settings into it's own context, or reducer
 
-type TensorflowContextType = {
-    trainingLogs: ScatterDataPoint[]
-    trainingEffects: ScatterDataPoint[]
-    modelSettings: ModelSettings
-    learningSettings: LearningSettings
-    isCompiled: boolean
-    isTraining: boolean
-    trainModel: () => Promise<void>
-    evaulateData: (data: number[]) => Promise<ScatterDataPoint[]>
-    compileModel: () => void
-    incrementLayerUnits: (layerName: string) => void
-    decrementLayerUnits: (layerName: string) => void
-    addLayer: () => void
-    removeLayer: () => void
-    setActivationFunction: (layerName: string, newValue: ActivationIdentifier) => void
-    stopTraining: () => void
-    setLearningOption: (option: { [k in keyof LearningSettings]?: LearningSettings[k] }) => void
-    setOptimizer: (newOptimazer: OptimizerType) => void
-    setOptimizerOption: (key: string, newValue: any) => void
-    setLoss: (newValue: LossesType) => void
-    setMetric: (newValue: MetricType) => void
-}
-
-const TensorflowContext = createContext<TensorflowContextType>({
-    trainingLogs: [],
-    trainingEffects: [],
+const TensorflowContext = createContext({
+    trainingLogs: [] as ScatterDataPoint[],
+    trainingValLogs: [] as ScatterDataPoint[],
+    trainingEffects: [] as { [key: string]: number }[],
     modelSettings: initialModelSettings,
     learningSettings: initialLearningSettings,
     isCompiled: false,
@@ -128,13 +107,12 @@ const TensorflowContext = createContext<TensorflowContextType>({
     trainModel: async () => {},
     evaulateData: async (data: number[]) => new Promise((res) => res([])),
     compileModel: () => {},
-    incrementLayerUnits: (layerName: string) => {},
-    decrementLayerUnits: (layerName: string) => {},
+    setLayersUnits: (layerName: string, newValue: number) => {},
     addLayer: () => {},
     removeLayer: () => {},
     setActivationFunction: (layerName: string, newValue: ActivationIdentifier) => {},
     stopTraining: () => {},
-    setLearningOption: () => {},
+    setLearningOption: (option: { [k in keyof LearningSettings]?: LearningSettings[k] }) => {},
     setOptimizer: (newOptimazer: OptimizerType) => {},
     setOptimizerOption: (key: string, newValue: any) => {},
     setLoss: (newValue: LossesType) => {},
@@ -142,10 +120,11 @@ const TensorflowContext = createContext<TensorflowContextType>({
 })
 
 function TensorflowProvider({ children }: { children: ReactNode }) {
-    const { learning, test } = useData()
+    const { learningData } = useData()
 
     const [trainingLogs, setTrainingLogs] = useState<ScatterDataPoint[]>([])
-    const [trainingEffects, setTrainingEffects] = useState<ScatterDataPoint[]>([])
+    const [trainingValLogs, setTrainingValLogs] = useState<ScatterDataPoint[]>([])
+    const [trainingEffects, setTrainingEffects] = useState<{ [key: string]: number }[]>([])
 
     const model = useRef<Sequential>(tf.sequential())
 
@@ -161,20 +140,11 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         setCompiled(false)
     }, [modelSettings])
 
-    const incrementLayerUnits = useCallback((layerName: string) => {
+    const setLayersUnits = useCallback((layerName: string, newValue: number) => {
         setModelSettings((state) => {
             const layerToChange = state.layers.find((layer) => layer.name === layerName)!
-            if (layerToChange.units >= MAX_UNITS) return state
-            layerToChange.units++
-            return { ...state }
-        })
-    }, [])
-
-    const decrementLayerUnits = useCallback((layerName) => {
-        setModelSettings((state) => {
-            const layerToChange = state.layers.find((layer) => layer.name === layerName)!
-            if (layerToChange.units <= MIN_UNITS) return state
-            layerToChange.units--
+            if (newValue > MAX_UNITS || newValue < MIN_UNITS) return state
+            layerToChange.units = newValue
             return { ...state }
         })
     }, [])
@@ -259,6 +229,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             metrics: tf.metrics[metric],
         })
         setTrainingLogs([])
+        setTrainingValLogs([])
         setCompiled(true)
         console.log('%cModel compiled succesfully', 'font-weight: bold; font-size: 16px;')
         model.current.summary()
@@ -267,8 +238,30 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     const trainModel = useCallback(async () => {
         const { epochs, batchSize, normalize } = learningSettings
 
-        const learningInput = normalize ? learning.x : learning.unNormalized.x
-        const learningLabels = normalize ? learning.y : learning.unNormalized.y
+        let learningInput = learningData.inputs.asTensor,
+            learningLabels = learningData.labels.asTensor,
+            labelMin: tf.Tensor,
+            labelMax: tf.Tensor,
+            inputMin: tf.Tensor,
+            inputMax: tf.Tensor
+
+        const inputKeys = learningData.inputs.keys
+        const labelKeys = learningData.labels.keys
+
+        if (normalize) {
+            const input = normalizeTensor(learningInput)
+            learningInput = input.normalizedTensor
+            inputMin = input.Min
+            inputMax = input.Max
+
+            const label = normalizeTensor(learningLabels)
+            learningLabels = label.normalizedTensor
+            labelMin = label.Min
+            labelMax = label.Max
+        }
+
+        learningInput.print()
+        learningLabels.print()
 
         const GRAIN_LEVEL = 20
         const MAX_TEST = learningInput.max().arraySync() as number
@@ -290,23 +283,30 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                             ...prev,
                             { x: epoch, y: logs ? logs[modelSettings.metric] : 0 },
                         ])
+                        setTrainingValLogs((prev) => [
+                            ...prev,
+                            { x: epoch, y: logs ? logs[`val_${modelSettings.metric}`] : 0 },
+                        ])
+                        console.log(logs)
                         let predictedTensor = model.current.predict(testVector) as tf.Tensor
+
                         if (normalize)
-                            predictedTensor = unNormalizeTensor(
-                                predictedTensor,
-                                learning.labelMin,
-                                learning.labelMax
-                            )
+                            predictedTensor = unNormalizeTensor(predictedTensor, labelMin, labelMax)
+
+                        //TODO: remmember to set this to {input_1: value, input_2: value, label_1: value}[]
                         setTrainingEffects(() => {
                             const predictedArray = predictedTensor.arraySync() as number[]
                             const testArray = normalize
                                 ? (unNormalizeTensor(
                                       testVector,
-                                      learning.inputMin,
-                                      learning.inputMax
+                                      inputMin,
+                                      inputMax
                                   ).arraySync() as number[])
                                 : testVector.arraySync()
-                            return predictedArray.map((y, i) => ({ y, x: testArray[i] }))
+                            return predictedArray.map((y, i) => ({
+                                [labelKeys[0]]: y,
+                                [inputKeys[0]]: testArray[i],
+                            }))
                         })
                         /* console.log(logs) */
                         // when fullfilling the training goal
@@ -321,20 +321,12 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         } finally {
             setTraining(false)
         }
-    }, [
-        learning.inputMax,
-        learning.inputMin,
-        learning.labelMax,
-        learning.labelMin,
-        learning.unNormalized.x,
-        learning.unNormalized.y,
-        learning.x,
-        learning.y,
-        learningSettings,
-        modelSettings.metric,
-        trainingLogs.length,
-    ])
+    }, [learningData, learningSettings, modelSettings.metric, trainingLogs.length])
 
+    /**
+     * TODO: implement proper evaulation
+     * @returns evaulation results
+     */
     const evaulateData = async () => {
         return [{ x: 0, y: 0 }]
     }
@@ -346,6 +338,8 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
     }
 
     const setOptimizerOption = (key: any, newValue: any) => {
+        if (isNaN(newValue)) newValue = undefined
+
         setModelSettings((prev) => {
             const newState = {
                 ...prev,
@@ -371,6 +365,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         <TensorflowContext.Provider
             value={{
                 trainingLogs,
+                trainingValLogs,
                 trainingEffects,
                 modelSettings,
                 learningSettings,
@@ -379,8 +374,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                 trainModel,
                 evaulateData,
                 compileModel,
-                incrementLayerUnits,
-                decrementLayerUnits,
+                setLayersUnits,
                 addLayer,
                 removeLayer,
                 setActivationFunction,

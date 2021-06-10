@@ -1,114 +1,116 @@
-import { createContext, useContext, useState, ReactNode, useCallback } from 'react'
+import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
 import { trainData, testData } from '../util/MockData'
 import * as tf from '@tensorflow/tfjs'
+import { Tensor, TensorLike } from '@tensorflow/tfjs'
 import { ScatterDataPoint } from 'chart.js'
-import normalizeTensor from '../util/normalizeTensor'
 
-type Data = {
-    x: tf.Tensor
-    y: tf.Tensor
-    inputMax: tf.Tensor
-    inputMin: tf.Tensor
-    labelMax: tf.Tensor
-    labelMin: tf.Tensor
-    scatter: ScatterDataPoint[]
-    unNormalized: {
-        x: tf.Tensor
-        y: tf.Tensor
-    }
-}
-
-// DATA NEED TO BE NORMALISED
-//TODO: make it so x and y can have more dimensions
-const createData = (data: number[][]) => {
-    const scatter = data.map(([x, y]) => ({ x, y }))
-    const tensors = tf.tidy(() => {
-        tf.util.shuffle(data)
-
-        const inputs = data.map(([x, y]) => x)
-        const labels = data.map(([x, y]) => y)
-
-        const inputTensor = tf.tensor2d(inputs, [inputs.length, 1])
-        const labelTensor = tf.tensor2d(labels, [labels.length, 1])
-
-        const {
-            normalizedTensor: normalizedInputs,
-            Min: inputMin,
-            Max: inputMax,
-        } = normalizeTensor(inputTensor)
-        const {
-            normalizedTensor: normalizedLabels,
-            Min: labelMin,
-            Max: labelMax,
-        } = normalizeTensor(labelTensor)
-
-        return {
-            x: normalizedInputs,
-            y: normalizedLabels,
-            inputMax,
-            inputMin,
-            labelMax,
-            labelMin,
-            unNormalized: {
-                x: inputTensor,
-                y: labelTensor,
-            },
-        }
-    })
-
-    return {
-        scatter,
-        ...tensors,
-    } as Data
-}
-
-type dataSetter = (data: number[][]) => void
-
-type DataState = {
-    learning: Data
-    /* validation: Data
-     */
-    test: Data
-    setLearningData: dataSetter
-    /* setValidationData: dataSetter */
-    setTestData: dataSetter
-}
-
-const initialState: DataState = {
-    learning: createData(trainData),
-    /*  validation: tensor(trainData), */
-    test: createData(testData),
-    setLearningData: (data: number[][]) => {},
-    /*   setValidationData: (data: number[][]) => {}, */
-    setTestData: (data: number[][]) => {},
+const initialState = {
+    learningData: {} as DataObject,
+    evaluationData: {} as DataObject,
 }
 
 const DataContext = createContext({
     ...initialState,
 })
 
-const useData = () => useContext(DataContext)
+type TensorsSet = {
+    [name: string]: Tensor | TensorLike
+}
+
+type InputOutputVector = {
+    asTensor: Tensor
+    keys: string[]
+} & TensorsSet
+
+type DataObject = {
+    inputs: InputOutputVector
+    labels: InputOutputVector
+    scatter: { [key: string]: number }[]
+    addInput: (data: TensorsSet) => void
+    addLabel: (data: TensorsSet) => void
+    removeInput: (key: string) => void
+    removeLabel: (key: string) => void
+}
+
+const initialInputOutputVector = {
+    asTensor: tf.tensor([]),
+    keys: [],
+}
+
+function useDataObject(): DataObject {
+    const [inputs, setInputs] = useState<InputOutputVector>(initialInputOutputVector)
+    const [labels, setLabels] = useState<InputOutputVector>(initialInputOutputVector)
+    const [scatter, setScatter] = useState<{ [key: string]: number }[]>([])
+
+    useEffect(() => {
+        const merged = { ...inputs, ...labels }
+        const scatter = Object.entries(merged)
+            .filter(([key]) => key !== 'keys' && key !== 'asTensor')
+            .reduce((scatter, [key, value]) => {
+                const asArray = (value as Tensor).arraySync() as number[]
+                asArray.forEach((value, index) => {
+                    scatter[index] = { ...scatter[index], [key]: value }
+                })
+                return scatter
+            }, [] as { [key: string]: number }[])
+
+        setScatter(scatter)
+    }, [inputs, labels])
+
+    const getDataSetter = (setter: any) => (data: TensorsSet) => {
+        //check for TensorLikeObjects
+        Object.entries(data).forEach(([key, value]) => {
+            if (!(value instanceof Tensor)) {
+                data[key] = tf.tensor(value)
+            }
+        })
+        setter((existing: InputOutputVector) => {
+            const tensorList = { ...existing, ...data }
+            return {
+                ...tensorList,
+                asTensor: tf.concat(Object.values(tensorList)),
+                keys: Object.keys(tensorList).filter((key) => key !== 'keys' && key !== 'asTensor'),
+            }
+        })
+    }
+
+    const getDataRemover = (setter: any) => (key: string) => {
+        setter(
+            (existing: InputOutputVector) =>
+                Object.fromEntries(
+                    Object.entries(existing).filter(([name]) => name !== key)
+                ) as InputOutputVector
+        )
+    }
+
+    const addInput = getDataSetter(setInputs)
+    const addLabel = getDataSetter(setLabels)
+
+    const removeInput = getDataRemover(setInputs)
+    const removeLabel = getDataRemover(setLabels)
+
+    return {
+        inputs,
+        labels,
+        addInput,
+        addLabel,
+        removeInput,
+        removeLabel,
+        scatter,
+    }
+}
 
 function DataProvider({ children, ...props }: { children: ReactNode }) {
-    const [learning, setLearning] = useState(initialState.learning)
-    /*  const [validation, setValidation] = useState(initialState.validation) */
-    const [test, setTest] = useState(initialState.test)
+    const learningData = useDataObject()
+    const evaluationData = useDataObject()
 
-    const setLearningData = useCallback((data: number[][]) => setLearning(createData(data)), [])
-
-    /* const setValidationData = (data) => setValidation(new Data(data)) */
-
-    const setTestData = (data: number[][]) => setTest(createData(data))
+    console.log(learningData)
 
     return (
         <DataContext.Provider
             value={{
-                learning,
-                /* validation, */
-                test,
-                setLearningData,
-                /* setValidationData, */
-                setTestData,
+                learningData,
+                evaluationData,
             }}
             {...props}
         >
@@ -116,5 +118,7 @@ function DataProvider({ children, ...props }: { children: ReactNode }) {
         </DataContext.Provider>
     )
 }
+
+const useData = () => useContext(DataContext)
 
 export { DataContext, DataProvider, useData }
