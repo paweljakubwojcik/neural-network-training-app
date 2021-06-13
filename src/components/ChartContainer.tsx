@@ -20,7 +20,8 @@ export default function ChartContainer({
 }: ChartContainerProps) {
     const [modalOpen, setModaleOpen] = useState(false)
 
-    const chartData = useChartData(data)
+   /*  const chartData = useChartData(data) */
+    const chartData = data
 
     return (
         <>

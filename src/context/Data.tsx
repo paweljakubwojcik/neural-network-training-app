@@ -3,6 +3,7 @@ import { trainData, testData } from '../util/MockData'
 import * as tf from '@tensorflow/tfjs'
 import { Tensor, TensorLike } from '@tensorflow/tfjs'
 import { ScatterDataPoint } from 'chart.js'
+import { useCallback } from 'react'
 
 const initialState = {
     learningData: {} as DataObject,
@@ -18,9 +19,10 @@ type TensorsSet = {
 }
 
 type InputOutputVector = {
+    data: TensorsSet
     asTensor: Tensor
     keys: string[]
-} & TensorsSet
+}
 
 type DataObject = {
     inputs: InputOutputVector
@@ -28,13 +30,14 @@ type DataObject = {
     scatter: { [key: string]: number }[]
     addInput: (data: TensorsSet) => void
     addLabel: (data: TensorsSet) => void
-    removeInput: (key: string) => void
-    removeLabel: (key: string) => void
+    removeInput: (key: string | undefined) => void
+    removeLabel: (key: string | undefined) => void
 }
 
 const initialInputOutputVector = {
     asTensor: tf.tensor([]),
     keys: [],
+    data: {},
 }
 
 function useDataObject(): DataObject {
@@ -43,7 +46,16 @@ function useDataObject(): DataObject {
     const [scatter, setScatter] = useState<{ [key: string]: number }[]>([])
 
     useEffect(() => {
-        const merged = { ...inputs, ...labels }
+        const merged = { ...inputs.data, ...labels.data }
+        /* const keys = Object.keys(merged)
+        if (!keys.length) return
+
+        const tensor = tf.tensor([inputs.asTensor.arraySync(), labels.asTensor.arraySync()])
+        console.log(tensor.shape)
+        const scatter = (tensor.reshape([-1, tensor.shape[0]]).arraySync() as number[][]).map(
+            (array) => Object.fromEntries(array.map((value, index) => [keys[index], value]))
+        ) */
+
         const scatter = Object.entries(merged)
             .filter(([key]) => key !== 'keys' && key !== 'asTensor')
             .reduce((scatter, [key, value]) => {
@@ -55,37 +67,53 @@ function useDataObject(): DataObject {
             }, [] as { [key: string]: number }[])
 
         setScatter(scatter)
+
+        console.log({ inputs, labels })
     }, [inputs, labels])
 
-    const getDataSetter = (setter: any) => (data: TensorsSet) => {
-        //check for TensorLikeObjects
-        Object.entries(data).forEach(([key, value]) => {
-            if (!(value instanceof Tensor)) {
-                data[key] = tf.tensor(value)
-            }
-        })
-        setter((existing: InputOutputVector) => {
-            const tensorList = { ...existing, ...data }
-            return {
-                ...tensorList,
-                asTensor: tf.concat(Object.values(tensorList)),
-                keys: Object.keys(tensorList).filter((key) => key !== 'keys' && key !== 'asTensor'),
-            }
-        })
-    }
+    const getDataSetter = useCallback(
+        (setter: any) => (data: TensorsSet) => {
+            //check for TensorLikeObjects
+            Object.entries(data).forEach(([key, value]) => {
+                if (!(value instanceof Tensor)) {
+                    data[key] = tf.tensor(value)
+                }
+            })
+            setter((existing: InputOutputVector) => {
+                const tensorList = { ...existing.data, ...data }
+                return {
+                    data: tensorList,
+                    asTensor: tf.tensor(
+                        Object.values(tensorList).map((value) => (value as Tensor).arraySync())
+                    ),
+                    keys: Object.keys(tensorList),
+                }
+            })
+        },
+        []
+    )
 
-    const getDataRemover = (setter: any) => (key: string) => {
-        setter(
-            (existing: InputOutputVector) =>
-                Object.fromEntries(
-                    Object.entries(existing).filter(([name]) => name !== key)
-                ) as InputOutputVector
-        )
-    }
+    const getDataRemover = useCallback(
+        (setter: any) => (key: string | undefined) => {
+            if (!key) return
+            setter((existing: InputOutputVector) => {
+                const tensorList = Object.fromEntries(
+                    Object.entries(existing.data).filter(([name]) => name !== key)
+                ) as TensorsSet
+                return {
+                    data: tensorList,
+                    asTensor: tf.tensor(
+                        Object.values(tensorList).map((value) => (value as Tensor).arraySync())
+                    ),
+                    keys: Object.keys(tensorList),
+                }
+            })
+        },
+        []
+    )
 
     const addInput = getDataSetter(setInputs)
     const addLabel = getDataSetter(setLabels)
-
     const removeInput = getDataRemover(setInputs)
     const removeLabel = getDataRemover(setLabels)
 
@@ -103,8 +131,6 @@ function useDataObject(): DataObject {
 function DataProvider({ children, ...props }: { children: ReactNode }) {
     const learningData = useDataObject()
     const evaluationData = useDataObject()
-
-    console.log(learningData)
 
     return (
         <DataContext.Provider
