@@ -58,7 +58,13 @@ export default forwardRef<HTMLCanvasElement, ChartProps>(function ChartComponent
                 const chart = new Chart(reference, {
                     type,
                     data,
-                    options,
+                    options: {
+                        ...options,
+                        font: {
+                            size: 1,
+                            lineHeight: 0.6,
+                        },
+                    },
                     plugins: [plugin],
                 })
                 chartInstance.current = chart

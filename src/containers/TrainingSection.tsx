@@ -90,12 +90,18 @@ export default function TrainingSection() {
                             title: {
                                 display: true,
                                 text: learningData.inputs.keys[0],
+                                font: {
+                                    size: 10,
+                                },
                             },
                         },
                         y: {
                             title: {
                                 display: true,
                                 text: learningData.labels.keys[0],
+                                font: {
+                                    size: 10,
+                                },
                             },
                         },
                     },

@@ -1,4 +1,5 @@
 import styled, { StyledComponent } from 'styled-components'
+import { MAX_LAPTOP, MAX_TABLET } from '../styles'
 
 /**
  * layout flex container
@@ -6,7 +7,7 @@ import styled, { StyledComponent } from 'styled-components'
 const Container = styled.div`
     display: grid;
 
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, 33%);
     grid-template-areas: 'model training evaulation';
 
     align-items: stretch;
@@ -16,18 +17,18 @@ const Container = styled.div`
     min-height: 100vh;
     padding: 1em;
 
-    @media (max-width: 1700px) {
+    @media (max-width: ${MAX_LAPTOP}px) {
         grid-template-areas:
             'model training'
             'model evaulation';
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, 50%);
     }
-    @media (max-width: 1100px) {
+    @media (max-width: ${MAX_TABLET}px) {
         grid-template-areas:
             'model'
             'training'
             'evaulation';
-        grid-template-columns: repeat(1, 1fr);
+        grid-template-columns: repeat(1, 100%);
     }
 `
 
