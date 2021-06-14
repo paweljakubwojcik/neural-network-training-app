@@ -16,8 +16,12 @@ export default function ChooseInputOutput({
 }) {
     const { learningData } = useData()
 
-    const [labels, setLabels] = useState<string[]>([''])
-    const [inputs, setInputs] = useState<string[]>([''])
+    const [labels, setLabels] = useState<string[]>(
+        learningData.inputs.keys.length ? learningData.inputs.keys : ['']
+    )
+    const [inputs, setInputs] = useState<string[]>(
+        learningData.labels.keys.length ? learningData.labels.keys : ['']
+    )
 
     useEffect(() => {
         const inputToRemove = learningData.inputs.keys.find((key) => !inputs.includes(key))

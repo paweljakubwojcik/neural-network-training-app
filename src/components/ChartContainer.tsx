@@ -5,6 +5,7 @@ import FullscreenIcon from '@material-ui/icons/Fullscreen'
 import IconButton from '@material-ui/core/IconButton'
 import ChartFullScreen from './ChartFullScreen'
 import useChartData from '../hooks/useChartData'
+import useDeepEquality from '../hooks/useDeepEquality'
 
 export interface ChartContainerProps extends ChartProps {
     title: string
@@ -20,8 +21,9 @@ export default function ChartContainer({
 }: ChartContainerProps) {
     const [modalOpen, setModaleOpen] = useState(false)
 
-   /*  const chartData = useChartData(data) */
-    const chartData = data
+    const chartData = useChartData(data)
+    /* const chartOptions = useDeepEquality(options) */
+    /*   const chartData = data */
 
     return (
         <>

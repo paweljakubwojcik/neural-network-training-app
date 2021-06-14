@@ -62,6 +62,20 @@ export default function TrainingSection() {
                         xAxisKey: learningData.inputs.keys[0],
                         yAxisKey: learningData.labels.keys[0],
                     },
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: learningData.inputs.keys[0],
+                            },
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: learningData.labels.keys[0],
+                            },
+                        },
+                    },
                 }}
             />
             <ChartContainer

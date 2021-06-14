@@ -15,22 +15,22 @@ import DataInputForm from '../components/DataInputForm'
 import { getDataFromCSVFile } from '../util/dataConverter'
 import TrainingDataForm from '../containers/TrainingDataForm'
 import TrainingSection from '../containers/TrainingSection'
+import EvaluationSection from '../containers/EvaluationSection'
 
 export default function Main() {
     const {
-        evaulateData,
         compileModel,
         isCompiled,
         modelSettings: { layers },
     } = useTensorflow()
-
-    const [predictedData, setPrediction] = useState([])
 
     const {
         palette: {
             primary: { main: MainColor },
         },
     } = useTheme()
+
+    console.log('render')
 
     return (
         <Container>
@@ -91,22 +91,8 @@ export default function Main() {
                         />
                     </Row>
                 </StyledCard>
-                <StyledCard>
-                    <StyledCard.Header>
-                        <h2>Effects</h2>
-                    </StyledCard.Header>
 
-                    <Button
-                        variant="contained"
-                        color="primary"
-                        onClick={async () => {
-                            setPrediction(await evaulateData())
-                        }}
-                        disabled={!isCompiled}
-                    >
-                        Evaulate
-                    </Button>
-                </StyledCard>
+                <EvaluationSection />
             </Column>
         </Container>
     )

@@ -41,6 +41,7 @@ function DataForm() {
                             color="primary"
                             onClick={() => {
                                 setMethod(value)
+                                setFields(undefined)
                             }}
                         >
                             {value}
