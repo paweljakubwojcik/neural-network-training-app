@@ -8,6 +8,7 @@ import DataFromDiskForm from './DataFromDiskForm'
 import DataFromURLForm from './DataFromURLForm'
 import ChooseInputOutputs from './ChooseInputOutputs'
 import { useData } from '../../context/Data'
+import MathFunctionGenerator from './MathFunctionGenerator'
 
 enum formState {
     FILE = 'Load from disk',
@@ -64,7 +65,9 @@ function DataForm({ whichData, header }: DataFormProps) {
                 {method === formState.URL && (
                     <DataFromURLForm setData={setData} setFields={setFields} />
                 )}
-                {method === formState.MATH && <div>options for math func</div>}
+                {method === formState.MATH && (
+                    <MathFunctionGenerator dataContext={dataContext[whichData]} />
+                )}
             </Row>
             {fields && (
                 <ChooseInputOutputs

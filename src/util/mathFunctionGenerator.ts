@@ -1,6 +1,6 @@
 const DEFAULT_MIN = 0
 const DEFAULT_MAX = 50
-const DEFAULT_LENGTH = 1
+const DEFAULT_LENGTH = 50
 
 const getNoise = (level: number) => Math.random() * 2 * level - level
 
@@ -17,9 +17,9 @@ const mathFunctionGenerator = {
         a: number
         b: number
         noise?: number
-        min: number
-        max: number
-        length: number
+        min?: number
+        max?: number
+        length?: number
     }) => {
         const {
             a,
@@ -62,7 +62,7 @@ const mathFunctionGenerator = {
         } = params
         return getXs(min, max, length).map((x) => ({
             x,
-            y: a * (Math.sin((x * w) / (2 * Math.PI)) + getNoise(noise)),
+            y: a * (Math.sin(x * (1 / w) * (2 * Math.PI)) + getNoise(noise)),
         }))
     },
     gauss: (params: {
@@ -85,10 +85,19 @@ const mathFunctionGenerator = {
             x,
             y:
                 (1 / Math.sqrt(2 * Math.PI * sigma * sigma)) *
-                    Math.exp((-Math.pow(x - a, 2) / 2) * sigma * sigma) +
+                    Math.exp(-Math.pow(x - a, 2) / (2 * sigma * sigma)) +
                 getNoise(noise),
         }))
     },
+}
+
+const defaultParams = ['noise', 'min', 'max', 'length']
+
+export const paramMap = {
+    linear: ['a', 'b'].concat(defaultParams),
+    exp: ['a'].concat(defaultParams),
+    sin: ['a', 'w'].concat(defaultParams),
+    gauss: ['a', 'sigma'].concat(defaultParams),
 }
 
 export default mathFunctionGenerator
