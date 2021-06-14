@@ -28,8 +28,8 @@ export default function TrainingSection() {
     return (
         <StyledCard>
             <ChartContainer
-                title={'Data Visualization'}
-                id={'Data Visualization'}
+                title={'Data Evaluation'}
+                id={'Data Evaluation'}
                 data={{
                     datasets: [
                         {

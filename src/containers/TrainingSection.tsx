@@ -1,30 +1,34 @@
-import React from 'react'
+import React, { useState } from 'react'
 
 import { Button } from '@material-ui/core'
 import PlayArrowIcon from '@material-ui/icons/PlayArrow'
 import PauseIcon from '@material-ui/icons/Pause'
 
-import StyledCard from '../components/StyledCard'
+import StyledCard, { StyledCardHeader } from '../components/StyledCard'
 import { Row } from '../components/Layout'
 import { useTheme } from '@material-ui/core/styles'
 
-import { useTensorflow } from '../context/Tensorflow'
+import { onEpochEndCallback, useTensorflow } from '../context/Tensorflow'
 import { useData } from '../context/Data'
-import LearningSettings from '../containers/LearningSettings'
+import LearningSettings from './LearningSettings'
 import ChartContainer from '../components/ChartContainer'
+import ErrorMessage from '../components/ErrorMessage'
 
 export default function TrainingSection() {
+    const [errors, setErrors] = useState<Error>()
+
     const {
         trainModel,
         stopTraining,
-        trainingLogs,
-        trainingValLogs,
-        trainingEffects,
         isCompiled,
         isTraining,
         modelSettings: { metric },
         learningSettings: { epochs },
     } = useTensorflow()
+
+    const [trainingLogs, setTrainingLogs] = useState<{ [key: string]: number }[]>([])
+    const [trainingValLogs, setTrainingValLogs] = useState<{ [key: string]: number }[]>([])
+    const [trainingEffects, setTrainingEffects] = useState<{ [key: string]: number }[]>([])
 
     const { learningData } = useData()
 
@@ -35,6 +39,25 @@ export default function TrainingSection() {
         },
     } = useTheme()
 
+    const onEpochEndCallback: onEpochEndCallback = async ({ metric, val }, currentPrediction) => {
+        setTrainingLogs((prev) => [...prev, metric])
+        setTrainingValLogs((prev) => [...prev, val])
+        setTrainingEffects(currentPrediction)
+    }
+
+    const onTrainBeginCallback = () => {
+        setTrainingLogs([])
+        setTrainingValLogs([])
+        setTrainingEffects([])
+    }
+
+    const handleTrainModel = async () => {
+        try {
+            await trainModel({ onEpochEndCallback, onTrainBeginCallback })
+        } catch (error) {
+            setErrors(error)
+        }
+    }
     return (
         <StyledCard>
             <ChartContainer
@@ -43,11 +66,11 @@ export default function TrainingSection() {
                 data={{
                     datasets: [
                         {
-                            data: learningData.scatter,
+                            data: learningData.scatter as any,
                             label: 'Learning data',
                         },
                         {
-                            data: trainingEffects,
+                            data: trainingEffects as any,
                             label: 'Prediction',
                             showLine: true,
                             backgroundColor: SecondaryColor,
@@ -82,7 +105,7 @@ export default function TrainingSection() {
                 data={{
                     datasets: [
                         {
-                            data: trainingLogs,
+                            data: trainingLogs as any,
                             label: metric,
                             borderColor: MainColor,
                             backgroundColor: MainColor,
@@ -90,7 +113,7 @@ export default function TrainingSection() {
                             pointRadius: 0,
                         },
                         {
-                            data: trainingValLogs,
+                            data: trainingValLogs as any,
                             label: `Validation error`,
                             borderColor: SecondaryColor,
                             backgroundColor: SecondaryColor,
@@ -116,21 +139,22 @@ export default function TrainingSection() {
                 id={'LearningCurve'}
             />
 
-            <StyledCard.Header>
+            <StyledCardHeader>
                 <h3>Training options</h3>
-            </StyledCard.Header>
+            </StyledCardHeader>
             <LearningSettings />
             <Row>
                 <Button
                     variant="contained"
                     color="primary"
-                    onClick={isTraining ? stopTraining : trainModel}
+                    onClick={isTraining ? stopTraining : handleTrainModel}
                     endIcon={isTraining ? <PauseIcon /> : <PlayArrowIcon />}
                     disabled={!isCompiled && !isTraining}
                 >
                     {isTraining ? 'stop' : 'Train'}
                 </Button>
             </Row>
+            {errors && <ErrorMessage>{`${errors.name}:  ${errors.message}`}</ErrorMessage>}
         </StyledCard>
     )
 }

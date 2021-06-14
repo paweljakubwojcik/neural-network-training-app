@@ -1,8 +1,6 @@
 import { createContext, useContext, useState, ReactNode, useEffect } from 'react'
-import { trainData, testData } from '../util/MockData'
 import * as tf from '@tensorflow/tfjs'
 import { Tensor, TensorLike } from '@tensorflow/tfjs'
-import { ScatterDataPoint } from 'chart.js'
 import { useCallback } from 'react'
 
 const initialState = {
@@ -18,7 +16,7 @@ type TensorsSet = {
     [name: string]: Tensor | TensorLike
 }
 
-type InputOutputVector = {
+export type InputOutputVector = {
     data: TensorsSet
     asTensor: Tensor
     keys: string[]

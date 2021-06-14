@@ -3,9 +3,17 @@ import styled from 'styled-components'
 import ChartComponent, { ChartProps, Chart } from './Chart'
 import FullscreenIcon from '@material-ui/icons/Fullscreen'
 import IconButton from '@material-ui/core/IconButton'
+import SettingsIcon from '@material-ui/icons/Settings'
+
 import ChartFullScreen from './ChartFullScreen'
 import useChartData from '../hooks/useChartData'
 import useDeepEquality from '../hooks/useDeepEquality'
+
+import Modal from '@material-ui/core/Modal'
+import StyledCard from '../components/StyledCard'
+import Fade from '@material-ui/core/Fade'
+import Backdrop from '@material-ui/core/Backdrop'
+import { Select, MenuItem, Input, InputLabel, FormControl } from '@material-ui/core'
 
 export interface ChartContainerProps extends ChartProps {
     title: string
@@ -20,22 +28,24 @@ export default function ChartContainer({
     ...props
 }: ChartContainerProps) {
     const [modalOpen, setModaleOpen] = useState(false)
+    // const [settingsOpen, setSettingsOpen] = useState(false)
 
     const chartData = useChartData(data)
-    /* const chartOptions = useDeepEquality(options) */
-    /*   const chartData = data */
 
     return (
         <>
             <Container {...props}>
                 <Header>
                     {title && <h3>{title}</h3>}
-                    <IconButton
+                   {/*  <IconButton
                         size="small"
                         color="inherit"
                         style={{ marginLeft: 'auto' }}
-                        onClick={() => setModaleOpen(true)}
+                        onClick={() => setSettingsOpen(true)}
                     >
+                        <SettingsIcon />
+                    </IconButton> */}
+                    <IconButton size="small" color="inherit" onClick={() => setModaleOpen(true)}>
                         <FullscreenIcon />
                     </IconButton>
                 </Header>
@@ -50,6 +60,35 @@ export default function ChartContainer({
                 type={type}
                 onClose={() => setModaleOpen(false)}
             />
+           {/*  <Modal
+                open={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                closeAfterTransition
+                BackdropComponent={Backdrop}
+                BackdropProps={{
+                    timeout: 400,
+                }}
+                style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}
+            >
+                <Fade in={settingsOpen} timeout={400}>
+                    <StyledCard>
+                        <Header>{title && <h2>{title} chart options</h2>}</Header>
+                        <Select
+                            labelId={'x'}
+                            value={options.scales.x.title}
+                            onChange={(e) => {
+                                setOptimizer(e.target.value)
+                            }}
+                        >
+                            {.map((value) => (
+                                <MenuItem value={value} key={value}>
+                                    {value}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </StyledCard>
+                </Fade>
+            </Modal> */}
         </>
     )
 }

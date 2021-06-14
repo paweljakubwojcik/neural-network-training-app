@@ -23,7 +23,6 @@ import {
 } from '../constants'
 
 import { Optimizer, Sequential, train } from '@tensorflow/tfjs'
-import type { ScatterDataPoint } from 'chart.js'
 import { useData } from './Data'
 import normalizeTensor from '../util/normalizeTensor'
 
@@ -94,6 +93,23 @@ type evaluationResults = {
     error: { [key: string]: number }[]
 }
 
+/**
+ * @argument currentTrainingLog - object containing metric loss and validation error from current epoch
+ * @argument currentPrediction - vector with current prediction
+ */
+export type onEpochEndCallback = (
+    currentTrainingLog: {
+        metric: { [key: string]: number }
+        val: { [key: string]: number }
+    },
+    currentPrediction: { [key: string]: number }[]
+) => void
+
+type trainModelFunction = (args: {
+    onEpochEndCallback: onEpochEndCallback
+    onTrainBeginCallback: () => void
+}) => Promise<void>
+
 const initialLearningSettings: LearningSettings = {
     batchSize: 32,
     epochs: 100,
@@ -103,14 +119,11 @@ const initialLearningSettings: LearningSettings = {
 //TODO: model settings into it's own context, or reducer
 
 const TensorflowContext = createContext({
-    trainingLogs: [] as ScatterDataPoint[],
-    trainingValLogs: [] as ScatterDataPoint[],
-    trainingEffects: [] as { [key: string]: number }[],
     modelSettings: initialModelSettings,
     learningSettings: initialLearningSettings,
     isCompiled: false,
     isTraining: false,
-    trainModel: async () => {},
+    trainModel: (async () => {}) as trainModelFunction,
     evaulateData: (): evaluationResults => ({} as evaluationResults),
     compileModel: () => {},
     setLayersUnits: (layerName: string, newValue: number) => {},
@@ -127,10 +140,6 @@ const TensorflowContext = createContext({
 
 function TensorflowProvider({ children }: { children: ReactNode }) {
     const { learningData } = useData()
-
-    const [trainingLogs, setTrainingLogs] = useState<ScatterDataPoint[]>([])
-    const [trainingValLogs, setTrainingValLogs] = useState<ScatterDataPoint[]>([])
-    const [trainingEffects, setTrainingEffects] = useState<{ [key: string]: number }[]>([])
 
     const model = useRef<Sequential>(tf.sequential())
 
@@ -239,118 +248,128 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             loss: tf.losses[loss] as any, // taka fcn jest w instrukcji
             metrics: tf.metrics[metric],
         })
-        setTrainingLogs([])
-        setTrainingValLogs([])
+
         setCompiled(true)
         console.log('%cModel compiled succesfully', 'font-weight: bold; font-size: 16px;')
         model.current.summary()
     }, [isTraining, modelSettings, stopTraining])
 
-    const trainModel = useCallback(async () => {
-        const { epochs, batchSize, normalize } = learningSettings
+    /**
+     * handles the normalization (if active), then calls a model.fit() with input and output specyfied in arguments
+     * calls onEpochEndsCallback on every epoch end to enable actualizing logs
+     */
+    const trainModel: trainModelFunction = useCallback(
+        async ({ onEpochEndCallback, onTrainBeginCallback }) => {
+            const { epochs, batchSize, normalize } = learningSettings
 
-        //TODO: clean up normalization
+            //TODO: clean up normalization
 
-        let learningInput = learningData.inputs.asTensor,
-            learningLabels = learningData.labels.asTensor,
-            labelMin: tf.Tensor,
-            labelMax: tf.Tensor,
-            inputMin: tf.Tensor,
-            inputMax: tf.Tensor
+            let learningInput = learningData.inputs.asTensor,
+                learningLabels = learningData.labels.asTensor,
+                labelMin: tf.Tensor,
+                labelMax: tf.Tensor,
+                inputMin: tf.Tensor,
+                inputMax: tf.Tensor
 
-        const inputKeys = learningData.inputs.keys
-        const labelKeys = learningData.labels.keys
+            const inputKeys = learningData.inputs.keys
+            const labelKeys = learningData.labels.keys
 
-        if (normalize) {
-            const input = normalizeTensor(learningInput)
-            learningInput = input.normalizedTensor
-            inputMin = input.Min
-            inputMax = input.Max
+            if (normalize) {
+                const input = normalizeTensor(learningInput)
+                learningInput = input.normalizedTensor
+                inputMin = input.Min
+                inputMax = input.Max
 
-            const label = normalizeTensor(learningLabels)
-            learningLabels = label.normalizedTensor
-            labelMin = label.Min
-            labelMax = label.Max
-        }
+                const label = normalizeTensor(learningLabels)
+                learningLabels = label.normalizedTensor
+                labelMin = label.Min
+                labelMax = label.Max
+            }
 
-        learningInput.print()
-        learningLabels.print()
+            learningInput.print()
+            learningLabels.print()
 
-        const GRAIN_LEVEL = 20
-        const MAX_TEST = learningInput.max().arraySync() as number
-        const MIN_TEST = learningInput.min().arraySync() as number
+            const GRAIN_LEVEL = 20
+            const MAX_TEST = learningInput.max().arraySync() as number
+            const MIN_TEST = learningInput.min().arraySync() as number
 
-        learningInput.min().print()
+            learningInput.min().print()
 
-        const testVector = tf
-            .tensor(inputKeys.map((k) => tf.linspace(MAX_TEST, MIN_TEST, GRAIN_LEVEL).arraySync()))
-            .reshape([-1, inputKeys.length])
+            const testVector = tf
+                .tensor(
+                    inputKeys.map((k) => tf.linspace(MAX_TEST, MIN_TEST, GRAIN_LEVEL).arraySync())
+                )
+                .reshape([-1, inputKeys.length])
 
-        setTraining(true)
-        try {
-            await model.current.fit(
-                learningInput.reshape([-1, inputKeys.length]),
-                learningLabels.reshape([-1, labelKeys.length]),
-                {
-                    batchSize,
-                    epochs,
-                    initialEpoch: trainingLogs.length,
-                    shuffle: true,
-                    validationSplit: 0.2,
-                    callbacks: {
-                        onEpochEnd: async (epoch, logs) => {
-                            setTrainingLogs((prev) => [
-                                ...prev,
-                                { x: epoch, y: logs ? logs[modelSettings.metric] : 0 },
-                            ])
-                            setTrainingValLogs((prev) => [
-                                ...prev,
-                                { x: epoch, y: logs ? logs[`val_${modelSettings.metric}`] : 0 },
-                            ])
-                            console.log(logs)
-                            let predictedTensor = model.current.predict(testVector) as tf.Tensor
+            setTraining(true)
+            try {
+                await model.current.fit(
+                    learningInput.reshape([-1, inputKeys.length]),
+                    learningLabels.reshape([-1, labelKeys.length]),
+                    {
+                        batchSize,
+                        epochs,
+                        shuffle: true,
+                        validationSplit: 0.2,
+                        yieldEvery: 50,
+                        callbacks: {
+                            onTrainBegin: onTrainBeginCallback,
+                            onEpochEnd: async (epoch, logs) => {
+                                // object containing metric loss and validation loss for current epoch
+                                const currentTrainingLog = {
+                                    metric: { x: epoch, y: logs ? logs[modelSettings.metric] : 0 },
+                                    val: {
+                                        x: epoch,
+                                        y: logs ? logs[`val_${modelSettings.metric}`] : 0,
+                                    },
+                                }
 
-                            if (normalize)
-                                predictedTensor = unNormalizeTensor(
-                                    predictedTensor,
-                                    labelMin,
-                                    labelMax
-                                )
-                            const predictedArray = predictedTensor.arraySync() as number[][]
-                            console.log(predictedArray)
+                                console.log(logs)
+                                let predictedTensor = model.current.predict(testVector) as tf.Tensor
 
-                            const testArray = normalize
-                                ? (unNormalizeTensor(
-                                      testVector,
-                                      inputMin,
-                                      inputMax
-                                  ).arraySync() as number[][])
-                                : (testVector.arraySync() as number[][])
+                                if (normalize)
+                                    predictedTensor = unNormalizeTensor(
+                                        predictedTensor,
+                                        labelMin,
+                                        labelMax
+                                    )
+                                const predictedArray = predictedTensor.arraySync() as number[][]
+                                console.log(predictedArray)
 
-                            // [[x, y],[x,y]],[[z],[z]] => [{x,y,z},{x,y,z}]
-                            setTrainingEffects(
-                                predictedArray.map((y, j) =>
+                                const testArray = normalize
+                                    ? (unNormalizeTensor(
+                                          testVector,
+                                          inputMin,
+                                          inputMax
+                                      ).arraySync() as number[][])
+                                    : (testVector.arraySync() as number[][])
+
+                                // [[x, y],[x,y]],[[z],[z]] => [{x,y,z},{x,y,z}]
+                                const currentPrediction = predictedArray.map((y, j) =>
                                     Object.fromEntries([
                                         ...labelKeys.map((key, i) => [key, y[i]]),
                                         ...inputKeys.map((key, i) => [key, testArray[j][i]]),
                                     ])
                                 )
-                            )
-                            /* console.log(logs) */
-                            // when fullfilling the training goal
-                            /* if (trainingGoal) {
+
+                                onEpochEndCallback(currentTrainingLog, currentPrediction)
+                                /* console.log(logs) */
+                                // when fullfilling the training goal
+                                /* if (trainingGoal) {
                         model.stopTraining = true
                     } */
+                            },
                         },
-                    },
-                }
-            )
-        } catch (e) {
-            throw e
-        } finally {
-            setTraining(false)
-        }
-    }, [learningData, learningSettings, modelSettings.metric, trainingLogs.length])
+                    }
+                )
+            } catch (e) {
+                throw e
+            } finally {
+                setTraining(false)
+            }
+        },
+        [learningData, learningSettings, modelSettings.metric]
+    )
 
     /**
      * TODO: implement proper evaulation
@@ -421,13 +440,11 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
             return { ...prev, metric: newValue }
         })
     }
+    // move logs into new context and use useState for context
 
     return (
         <TensorflowContext.Provider
             value={{
-                trainingLogs,
-                trainingValLogs,
-                trainingEffects,
                 modelSettings,
                 learningSettings,
                 isCompiled,
