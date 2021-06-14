@@ -81,31 +81,9 @@ export default function TrainingSection() {
                 }}
                 options={{
                     animation: false,
-                    parsing: {
-                        xAxisKey: learningData.inputs.keys[0],
-                        yAxisKey: learningData.labels.keys[0],
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: learningData.inputs.keys[0],
-                                font: {
-                                    size: 10,
-                                },
-                            },
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: learningData.labels.keys[0],
-                                font: {
-                                    size: 10,
-                                },
-                            },
-                        },
-                    },
                 }}
+                xkeys={learningData.inputs.keys}
+                ykeys={learningData.labels.keys}
             />
             <ChartContainer
                 data={{

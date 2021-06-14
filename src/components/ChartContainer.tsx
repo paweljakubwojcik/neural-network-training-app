@@ -3,17 +3,17 @@ import styled from 'styled-components'
 import ChartComponent, { ChartProps, Chart } from './Chart'
 import FullscreenIcon from '@material-ui/icons/Fullscreen'
 import IconButton from '@material-ui/core/IconButton'
-import SettingsIcon from '@material-ui/icons/Settings'
+// import SettingsIcon from '@material-ui/icons/Settings'
 
 import ChartFullScreen from './ChartFullScreen'
 import useChartData from '../hooks/useChartData'
-import useDeepEquality from '../hooks/useDeepEquality'
+// import useDeepEquality from '../hooks/useDeepEquality'
 
-import Modal from '@material-ui/core/Modal'
+/* import Modal from '@material-ui/core/Modal'
 import StyledCard from '../components/StyledCard'
 import Fade from '@material-ui/core/Fade'
 import Backdrop from '@material-ui/core/Backdrop'
-import { Select, MenuItem, Input, InputLabel, FormControl } from '@material-ui/core'
+import { Select, MenuItem, Input, InputLabel, FormControl } from '@material-ui/core' */
 
 export interface ChartContainerProps extends ChartProps {
     title: string
@@ -25,6 +25,8 @@ export default function ChartContainer({
     options,
     type,
     id,
+    xkeys,
+    ykeys,
     ...props
 }: ChartContainerProps) {
     const [modalOpen, setModaleOpen] = useState(false)
@@ -37,7 +39,7 @@ export default function ChartContainer({
             <Container {...props}>
                 <Header>
                     {title && <h3>{title}</h3>}
-                   {/*  <IconButton
+                    {/*  <IconButton
                         size="small"
                         color="inherit"
                         style={{ marginLeft: 'auto' }}
@@ -45,11 +47,23 @@ export default function ChartContainer({
                     >
                         <SettingsIcon />
                     </IconButton> */}
-                    <IconButton size="small" color="inherit" onClick={() => setModaleOpen(true)}>
+                    <IconButton
+                        size="small"
+                        color="inherit"
+                        style={{ marginLeft: 'auto' }}
+                        onClick={() => setModaleOpen(true)}
+                    >
                         <FullscreenIcon />
                     </IconButton>
                 </Header>
-                <ChartComponent data={chartData} options={options} id={id} type={type} />
+                <ChartComponent
+                    data={chartData}
+                    options={options}
+                    id={id}
+                    type={type}
+                    xkeys={xkeys}
+                    ykeys={ykeys}
+                />
             </Container>
             <ChartFullScreen
                 title={title}
@@ -59,8 +73,10 @@ export default function ChartContainer({
                 open={modalOpen}
                 type={type}
                 onClose={() => setModaleOpen(false)}
+                xkeys={xkeys}
+                ykeys={ykeys}
             />
-           {/*  <Modal
+            {/*  <Modal
                 open={settingsOpen}
                 onClose={() => setSettingsOpen(false)}
                 closeAfterTransition
@@ -106,4 +122,11 @@ const Container = styled.div`
 const Header = styled.header`
     display: flex;
     width: 100%;
+`
+
+const InvisibleButton = styled.button`
+    opacity: 0;
+    position: absolute;
+    padding: 0;
+    cursor: pointer;
 `

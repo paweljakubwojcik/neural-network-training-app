@@ -75,7 +75,7 @@ const initialModelSettings: ModelSettings = {
         {
             name: 'Output Layer',
             units: 1,
-            adjustable: true,
+            adjustable: false,
             activation: 'linear',
         },
     ],
@@ -376,20 +376,39 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
      * @returns evaulation results
      */
     const evaulateData = useCallback(() => {
-        // 1.evaulate ( get total loss and metric )
         const { inputs, labels } = learningData
+        const { normalize } = learningSettings
 
-        const evaluation = model.current.evaluate(
-            inputs.asTensor.reshape([-1, inputs.keys.length]),
-            labels.asTensor.reshape([-1, labels.keys.length])
-        )
+        // handle normalization
+        let learningInput = inputs.asTensor,
+            learningLabels = labels.asTensor,
+            labelMin: tf.Tensor,
+            labelMax: tf.Tensor,
+            inputMin: tf.Tensor,
+            inputMax: tf.Tensor
 
-        const testInput = inputs.asTensor.reshape([-1, inputs.keys.length])
-        const testLabels = labels.asTensor.reshape([-1, labels.keys.length])
+        if (normalize) {
+            const input = normalizeTensor(learningInput)
+            learningInput = input.normalizedTensor
+            inputMin = input.Min
+            inputMax = input.Max
+
+            const label = normalizeTensor(learningLabels)
+            learningLabels = label.normalizedTensor
+            labelMin = label.Min
+            labelMax = label.Max
+        }
+
+        // 1.evaulate ( get total loss and metric )
+
+        const testInput = learningInput.reshape([-1, inputs.keys.length])
+        const testLabels = learningLabels.reshape([-1, labels.keys.length])
+
+        const evaluation = model.current.evaluate(testInput, testLabels)
 
         // 2.get final prediction
 
-        const finalPrediction = model.current.predict(testInput) as tf.Tensor
+        /* const finalPrediction = model.current.predict(testInput) as tf.Tensor
 
         const prediction = (finalPrediction.arraySync() as number[][]).map((y, j) =>
             Object.fromEntries([
@@ -404,12 +423,37 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                 ...labels.keys.map((key, i) => [key, y[i]]),
                 ...inputs.keys.map((key, i) => [key, (testInput.arraySync() as number[][])[j][i]]),
             ])
+        ) */
+
+        let finalPrediction = model.current.predict(testInput) as tf.Tensor
+
+        let errorTensor = finalPrediction.sub(testLabels)
+
+        if (normalize) finalPrediction = unNormalizeTensor(finalPrediction, labelMin!, labelMax!)
+        if (normalize) errorTensor = unNormalizeTensor(errorTensor, labelMin!, labelMax!)
+
+        const testArray = normalize
+            ? (unNormalizeTensor(testInput, inputMin!, inputMax!).arraySync() as number[][])
+            : (testInput.arraySync() as number[][])
+
+        // [[x, y],[x,y]],[[z],[z]] => [{x,y,z},{x,y,z}]
+        const prediction = (finalPrediction.arraySync() as number[][]).map((y, j) =>
+            Object.fromEntries([
+                ...labels.keys.map((key, i) => [key, y[i]]),
+                ...inputs.keys.map((key, i) => [key, testArray[j][i]]),
+            ])
+        )
+        const error = (errorTensor.arraySync() as number[][]).map((y, j) =>
+            Object.fromEntries([
+                ...labels.keys.map((key, i) => [key, y[i]]),
+                ...inputs.keys.map((key, i) => [key, testArray[j][i]]),
+            ])
         )
 
         console.log({ evaluation, prediction, error })
 
         return { evaluation, prediction, error }
-    }, [learningData])
+    }, [learningData, learningSettings])
 
     const setLearningOption = (
         options: { [k in keyof LearningSettings]?: LearningSettings[k] }

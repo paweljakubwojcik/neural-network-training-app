@@ -22,6 +22,8 @@ export default function ChartFullScreen({
     options,
     data,
     type,
+    xkeys,
+    ykeys,
 }: ChartFullScreenProps) {
     const MODAL_CHART_ID = `${id}-modal`
 
@@ -48,8 +50,20 @@ export default function ChartFullScreen({
             <Fade in={open} timeout={400}>
                 <ModalCard>
                     <Header>{title && <h2>{title}</h2>}</Header>
-                    <ChartComponent data={data} options={options} id={MODAL_CHART_ID} type={type} />
-                    <Button variant="contained" color="primary" onClick={() => downloadPicture()}>
+                    <ChartComponent
+                        data={data}
+                        options={options}
+                        id={MODAL_CHART_ID}
+                        type={type}
+                        xkeys={xkeys}
+                        ykeys={ykeys}
+                    />
+                    <Button
+                        variant="contained"
+                        color="primary"
+                        onClick={() => downloadPicture()}
+                        style={{ margin: '1em' }}
+                    >
                         Download Image
                     </Button>
                 </ModalCard>

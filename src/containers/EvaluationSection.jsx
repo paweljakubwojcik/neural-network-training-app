@@ -53,7 +53,7 @@ export default function TrainingSection() {
                     ],
                 }}
                 options={{
-                    animation: false,
+                    animation: true,
                     parsing: {
                         xAxisKey: learningData.inputs.keys[0],
                         yAxisKey: learningData.labels.keys[0],
