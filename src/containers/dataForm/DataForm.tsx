@@ -7,6 +7,7 @@ import { Button, ButtonGroup } from '@material-ui/core'
 import DataFromDiskForm from './DataFromDiskForm'
 import DataFromURLForm from './DataFromURLForm'
 import ChooseInputOutputs from './ChooseInputOutputs'
+import { useData } from '../../context/Data'
 
 enum formState {
     FILE = 'Load from disk',
@@ -19,7 +20,14 @@ export interface dataSubFormProps {
     setData: (data: { [key: string]: string | number }[]) => void
 }
 
-function DataForm() {
+interface DataFormProps {
+    whichData: 'learningData' | 'evaluationData'
+    header: string
+}
+
+function DataForm({ whichData, header }: DataFormProps) {
+    const dataContext = useData()
+
     const [method, setMethod] = useState(formState.FILE)
 
     const [fields, setFields] = useState<string[] | undefined>()
@@ -28,7 +36,7 @@ function DataForm() {
     return (
         <StyledCard>
             <StyledCardHeader>
-                <h2>Training data</h2>
+                <h2>{header}</h2>
             </StyledCardHeader>
             <Row>
                 <ButtonGroup variant="contained" size="small" color="primary">
@@ -58,7 +66,13 @@ function DataForm() {
                 )}
                 {method === formState.MATH && <div>options for math func</div>}
             </Row>
-            {fields && <ChooseInputOutputs fields={fields} data={data} />}
+            {fields && (
+                <ChooseInputOutputs
+                    fields={fields}
+                    data={data}
+                    dataContext={dataContext[whichData]}
+                />
+            )}
         </StyledCard>
     )
 }

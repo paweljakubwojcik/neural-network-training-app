@@ -139,7 +139,7 @@ const TensorflowContext = createContext({
 })
 
 function TensorflowProvider({ children }: { children: ReactNode }) {
-    const { learningData } = useData()
+    const { learningData, evaluationData } = useData()
 
     const model = useRef<Sequential>(tf.sequential())
 
@@ -376,7 +376,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
      * @returns evaulation results
      */
     const evaulateData = useCallback(() => {
-        const { inputs, labels } = learningData
+        const { inputs, labels } = evaluationData
         const { normalize } = learningSettings
 
         // handle normalization
@@ -453,7 +453,7 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         console.log({ evaluation, prediction, error })
 
         return { evaluation, prediction, error }
-    }, [learningData, learningSettings])
+    }, [evaluationData, learningSettings])
 
     const setLearningOption = (
         options: { [k in keyof LearningSettings]?: LearningSettings[k] }

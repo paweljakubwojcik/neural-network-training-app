@@ -113,7 +113,7 @@ export default forwardRef<HTMLCanvasElement, ChartProps>(function ChartComponent
 
     return (
         <div style={{ position: 'relative', width: '100%' }}>
-            {ykeys && (
+            {ykeys && ykeys?.length > 1 && (
                 <>
                     <InvisibleButton
                         style={{ width: '2em', height: '80%', left: 0, top: 0 }}
@@ -130,7 +130,7 @@ export default forwardRef<HTMLCanvasElement, ChartProps>(function ChartComponent
                     />
                 </>
             )}
-            {xkeys && (
+            {xkeys && xkeys?.length > 1 && (
                 <>
                     <InvisibleButton
                         style={{ width: '80%', height: '2em', right: 0, bottom: 0 }}
@@ -147,7 +147,7 @@ export default forwardRef<HTMLCanvasElement, ChartProps>(function ChartComponent
                     />
                 </>
             )}
-            <canvas ref={canvasRef} id={id}></canvas>{' '}
+            <canvas ref={canvasRef} id={id}></canvas>
         </div>
     )
 })

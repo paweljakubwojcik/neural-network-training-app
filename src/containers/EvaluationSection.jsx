@@ -9,12 +9,13 @@ import { useTheme } from '@material-ui/core/styles'
 import { useTensorflow } from '../context/Tensorflow'
 import { useData } from '../context/Data'
 import ChartContainer from '../components/ChartContainer'
+import TextField from '@material-ui/core/TextField'
 
 export default function TrainingSection() {
     const { isCompiled, isTraining, evaulateData } = useTensorflow()
-    const [evaluationResults, setEvaluationResults] = useState({})
+    const [evaluationResults, setEvaluationResults] = useState({ evaluation: ['', ''] })
 
-    const { evaluationData, learningData } = useData()
+    const { evaluationData } = useData()
 
     const {
         palette: {
@@ -33,7 +34,7 @@ export default function TrainingSection() {
                 data={{
                     datasets: [
                         {
-                            data: learningData.scatter,
+                            data: evaluationData.scatter,
                             label: 'Evaulation Data',
                         },
                         {
@@ -41,46 +42,40 @@ export default function TrainingSection() {
                             label: 'Prediction',
                             backgroundColor: MainColor,
                             borderColor: MainColor,
-                            pointRadius: 1,
                         },
                         {
                             data: evaluationResults.error,
                             label: 'Error',
                             backgroundColor: SecondaryColor,
                             borderColor: SecondaryColor,
-                            pointRadius: 1,
                         },
                     ],
                 }}
                 options={{
                     animation: true,
-                    parsing: {
-                        xAxisKey: learningData.inputs.keys[0],
-                        yAxisKey: learningData.labels.keys[0],
-                    },
-                    scales: {
-                        x: {
-                            title: {
-                                display: true,
-                                text: learningData.inputs.keys[0],
-                            },
-                        },
-                        y: {
-                            title: {
-                                display: true,
-                                text: learningData.labels.keys[0],
-                            },
-                        },
-                    },
                 }}
+                xkeys={evaluationData.inputs.keys}
+                ykeys={evaluationData.labels.keys}
             />
-
+            <Row>
+                <TextField
+                    label={'metric loss loss'}
+                    inputProps={{ readOnly: true }}
+                    defaultValue={evaluationResults.evaluation[0]}
+                />
+                <TextField
+                    label={'validation loss'}
+                    inputProps={{ readOnly: true }}
+                    defaultValue={evaluationResults.evaluation[1]}
+                    variant="outlined"
+                />
+            </Row>
             <Button
                 variant="contained"
                 color="primary"
                 onClick={async () => {
-                    const { error, prediction } = evaulateData()
-                    setEvaluationResults({ error, prediction })
+                    const { error, prediction, evaluation } = evaulateData()
+                    setEvaluationResults({ error, prediction, evaluation })
                 }}
                 disabled={!isCompiled}
             >

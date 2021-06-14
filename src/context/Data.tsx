@@ -22,7 +22,7 @@ export type InputOutputVector = {
     keys: string[]
 }
 
-type DataObject = {
+export type DataObject = {
     inputs: InputOutputVector
     labels: InputOutputVector
     scatter: { [key: string]: number }[]

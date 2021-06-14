@@ -11,9 +11,8 @@ import { useTensorflow } from '../context/Tensorflow'
 import LayersControls from '../containers/LayersControls'
 import NetworkDiagram from '../components/NetworkDiagram'
 import ModelOptions from '../containers/ModelOptions'
-import DataInputForm from '../components/DataInputForm'
-import { getDataFromCSVFile } from '../util/dataConverter'
 import TrainingDataForm from '../containers/TrainingDataForm'
+import EvaluationDataForm from '../containers/EvaluationDataForm'
 import TrainingSection from '../containers/TrainingSection'
 import EvaluationSection from '../containers/EvaluationSection'
 
@@ -79,18 +78,7 @@ export default function Main() {
             {/* Evaulation section */}
             <Column gridName={'evaulation'}>
                 <Column.Header>Evaluation</Column.Header>
-                <StyledCard /* style={{ width: '50%', marginRight: 'auto', marginLeft: 0 }} */>
-                    <StyledCard.Header>
-                        <h2>Test data</h2>
-                    </StyledCard.Header>
-                    <Row>
-                        <DataInputForm
-                            onUpload={async (file) => {
-                                console.log(await getDataFromCSVFile(file))
-                            }}
-                        />
-                    </Row>
-                </StyledCard>
+                <EvaluationDataForm />
 
                 <EvaluationSection />
             </Column>

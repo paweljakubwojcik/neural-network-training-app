@@ -1,41 +1,41 @@
 import React, { useState } from 'react'
 import { Row, Column } from '../../components/Layout'
-import { Button, IconButton, IconButtonProps, MenuItem, useTheme } from '@material-ui/core'
+import { IconButton, IconButtonProps, MenuItem, useTheme } from '@material-ui/core'
 import TextField from '@material-ui/core/TextField'
 import AddIcon from '@material-ui/icons/Add'
 import DeleteIcon from '@material-ui/icons/Delete'
-import { useData } from '../../context/Data'
+import { DataObject } from '../../context/Data'
 import { useEffect } from 'react'
 
 export default function ChooseInputOutput({
     fields,
     data,
+    dataContext,
 }: {
     fields: string[]
     data: { [key: string]: any }[]
+    dataContext: DataObject
 }) {
-    const { learningData } = useData()
-
     const [labels, setLabels] = useState<string[]>(
-        learningData.inputs.keys.length ? learningData.inputs.keys : ['']
+        dataContext.inputs.keys.length ? dataContext.inputs.keys : ['']
     )
     const [inputs, setInputs] = useState<string[]>(
-        learningData.labels.keys.length ? learningData.labels.keys : ['']
+        dataContext.labels.keys.length ? dataContext.labels.keys : ['']
     )
 
     useEffect(() => {
-        const inputToRemove = learningData.inputs.keys.find((key) => !inputs.includes(key))
-        const labelToRemove = learningData.labels.keys.find((key) => !labels.includes(key))
+        const inputToRemove = dataContext.inputs.keys.find((key) => !inputs.includes(key))
+        const labelToRemove = dataContext.labels.keys.find((key) => !labels.includes(key))
 
-        learningData.removeInput(inputToRemove)
-        learningData.removeLabel(labelToRemove)
+        dataContext.removeInput(inputToRemove)
+        dataContext.removeLabel(labelToRemove)
 
-        const inputToAdd = inputs.find((key) => !learningData.inputs.keys.includes(key))
-        const labelToAdd = labels.find((key) => !learningData.labels.keys.includes(key))
+        const inputToAdd = inputs.find((key) => !dataContext.inputs.keys.includes(key))
+        const labelToAdd = labels.find((key) => !dataContext.labels.keys.includes(key))
 
-        if (inputToAdd) learningData.addInput({ [inputToAdd]: data.map((obj) => obj[inputToAdd]) })
-        if (labelToAdd) learningData.addLabel({ [labelToAdd]: data.map((obj) => obj[labelToAdd]) })
-    }, [data, inputs, labels, learningData, learningData.inputs.keys, learningData.labels.keys])
+        if (inputToAdd) dataContext.addInput({ [inputToAdd]: data.map((obj) => obj[inputToAdd]) })
+        if (labelToAdd) dataContext.addLabel({ [labelToAdd]: data.map((obj) => obj[labelToAdd]) })
+    }, [data, inputs, labels, dataContext, dataContext.inputs.keys, dataContext.labels.keys])
 
     return (
         <Row style={{ alignItems: 'flex-start' }}>
