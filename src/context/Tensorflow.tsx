@@ -9,7 +9,6 @@ import React, {
 } from 'react'
 import * as tf from '@tensorflow/tfjs'
 
-import getParamNames from '../util/getParamNames'
 import unNormalizeTensor from '../util/unNormalizeTensor'
 
 import {
@@ -24,7 +23,7 @@ import {
     optimizerInfo,
 } from '../constants'
 
-import { Optimizer, Sequential, train } from '@tensorflow/tfjs'
+import { Sequential } from '@tensorflow/tfjs'
 import { useData } from './Data'
 import normalizeTensor from '../util/normalizeTensor'
 
@@ -49,6 +48,29 @@ export interface LearningSettings {
     epochs: number
     normalize: boolean
 }
+
+type evaluationResults = {
+    evaluation: number[]
+    prediction: { [key: string]: number }[]
+    error: { [key: string]: number }[]
+}
+
+/**
+ * @argument currentTrainingLog - object containing metric loss and validation error from current epoch
+ * @argument currentPrediction - vector with current prediction
+ */
+export type onEpochEndCallback = (
+    currentTrainingLog: {
+        metric: { [key: string]: number }
+        val: { [key: string]: number }
+    },
+    currentPrediction: { [key: string]: number }[]
+) => void
+
+type trainModelFunction = (args: {
+    onEpochEndCallback: onEpochEndCallback
+    onTrainBeginCallback: () => void
+}) => Promise<void>
 
 const initialModelSettings: ModelSettings = {
     layers: [
@@ -79,36 +101,11 @@ const initialModelSettings: ModelSettings = {
     metric: 'meanSquaredError',
 }
 
-type evaluationResults = {
-    evaluation: number[]
-    prediction: { [key: string]: number }[]
-    error: { [key: string]: number }[]
-}
-
-/**
- * @argument currentTrainingLog - object containing metric loss and validation error from current epoch
- * @argument currentPrediction - vector with current prediction
- */
-export type onEpochEndCallback = (
-    currentTrainingLog: {
-        metric: { [key: string]: number }
-        val: { [key: string]: number }
-    },
-    currentPrediction: { [key: string]: number }[]
-) => void
-
-type trainModelFunction = (args: {
-    onEpochEndCallback: onEpochEndCallback
-    onTrainBeginCallback: () => void
-}) => Promise<void>
-
 const initialLearningSettings: LearningSettings = {
     batchSize: 32,
     epochs: 100,
     normalize: true,
 }
-
-//TODO: model settings into it's own context, or reducer
 
 const TensorflowContext = createContext({
     modelSettings: initialModelSettings,

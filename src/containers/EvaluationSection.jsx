@@ -10,9 +10,12 @@ import { useTensorflow } from '../context/Tensorflow'
 import { useData } from '../context/Data'
 import ChartContainer from '../components/ChartContainer'
 import TextField from '@material-ui/core/TextField'
+import ErrorMessage from '../components/ErrorMessage'
 
 export default function TrainingSection() {
-    const { isCompiled, isTraining, evaulateData } = useTensorflow()
+    const [errors, setErrors] = useState()
+
+    const { isCompiled, evaulateData } = useTensorflow()
     const [evaluationResults, setEvaluationResults] = useState({ evaluation: ['', ''] })
 
     const { evaluationData } = useData()
@@ -23,8 +26,6 @@ export default function TrainingSection() {
             secondary: { main: SecondaryColor },
         },
     } = useTheme()
-
-    console.log(evaluationResults)
 
     return (
         <StyledCard>
@@ -74,13 +75,18 @@ export default function TrainingSection() {
                 variant="contained"
                 color="primary"
                 onClick={async () => {
-                    const { error, prediction, evaluation } = evaulateData()
-                    setEvaluationResults({ error, prediction, evaluation })
+                    try {
+                        const { error, prediction, evaluation } = evaulateData()
+                        setEvaluationResults({ error, prediction, evaluation })
+                    } catch (e) {
+                        setErrors(e)
+                    }
                 }}
                 disabled={!isCompiled}
             >
                 Evaulate
             </Button>
+            {errors && <ErrorMessage>{errors.message}</ErrorMessage>}
         </StyledCard>
     )
 }

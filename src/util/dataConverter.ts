@@ -1,15 +1,15 @@
-import jBinary from 'jbinary'
-import MAT from './jMatFile'
+/* import jBinary from 'jbinary'
+import MAT from './jMatFile' */
 
 import Papa, { ParseResult } from 'papaparse'
 
-const toBase64 = (file: File) =>
+/* const toBase64 = (file: File) =>
     new Promise((resolve, reject) => {
         const reader = new FileReader()
         reader.readAsDataURL(file)
         reader.onload = () => resolve(reader.result)
         reader.onerror = (error) => reject(error)
-    })
+    }) */
 
 export const getDataFromMatFile = async (file: File) => {
     /* const file64 = await toBase64(file)
@@ -28,7 +28,7 @@ export const getDataFromMatFile = async (file: File) => {
     }) */
 }
 
-const transposeMatrix = (matrix: number[][]) => {
+/* const transposeMatrix = (matrix: number[][]) => {
     return matrix.reduce(
         (result, row) => {
             row.forEach((element, i) => {
@@ -40,7 +40,7 @@ const transposeMatrix = (matrix: number[][]) => {
         },
         [[]] as number[][]
     )
-}
+} */
 
 export const getDataFromCSVFile: (
     file: File | string
