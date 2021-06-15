@@ -1,17 +1,17 @@
 {
   "files": {
-    "main.js": "/neural-network-training-app/static/js/main.bf4d5369.chunk.js",
-    "main.js.map": "/neural-network-training-app/static/js/main.bf4d5369.chunk.js.map",
+    "main.js": "/neural-network-training-app/static/js/main.ee3e6de2.chunk.js",
+    "main.js.map": "/neural-network-training-app/static/js/main.ee3e6de2.chunk.js.map",
     "runtime-main.js": "/neural-network-training-app/static/js/runtime-main.c0418f52.js",
     "runtime-main.js.map": "/neural-network-training-app/static/js/runtime-main.c0418f52.js.map",
-    "static/js/2.cb41c474.chunk.js": "/neural-network-training-app/static/js/2.cb41c474.chunk.js",
-    "static/js/2.cb41c474.chunk.js.map": "/neural-network-training-app/static/js/2.cb41c474.chunk.js.map",
+    "static/js/2.3778af17.chunk.js": "/neural-network-training-app/static/js/2.3778af17.chunk.js",
+    "static/js/2.3778af17.chunk.js.map": "/neural-network-training-app/static/js/2.3778af17.chunk.js.map",
     "index.html": "/neural-network-training-app/index.html",
-    "static/js/2.cb41c474.chunk.js.LICENSE.txt": "/neural-network-training-app/static/js/2.cb41c474.chunk.js.LICENSE.txt"
+    "static/js/2.3778af17.chunk.js.LICENSE.txt": "/neural-network-training-app/static/js/2.3778af17.chunk.js.LICENSE.txt"
   },
   "entrypoints": [
     "static/js/runtime-main.c0418f52.js",
-    "static/js/2.cb41c474.chunk.js",
-    "static/js/main.bf4d5369.chunk.js"
+    "static/js/2.3778af17.chunk.js",
+    "static/js/main.ee3e6de2.chunk.js"
   ]
 }
