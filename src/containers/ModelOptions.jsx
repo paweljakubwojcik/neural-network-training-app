@@ -1,9 +1,10 @@
 import styled from 'styled-components'
 import { Row } from '../components/Layout'
-import { train } from '@tensorflow/tfjs'
 import { Select, MenuItem, Input, InputLabel, FormControl } from '@material-ui/core'
 import { useTensorflow } from '../context/Tensorflow'
 import { LOSSES_FUNCTIONS, METRICS } from '../constants'
+
+import { OPTIMIZERS } from '../constants/optimizers'
 
 export default function ModelOptions() {
     const {
@@ -13,8 +14,6 @@ export default function ModelOptions() {
         setLoss,
         setMetric,
     } = useTensorflow()
-
-    const learningAlgorithmOptions = Object.entries(optimizerOptions)
 
     return (
         <Container>
@@ -28,7 +27,7 @@ export default function ModelOptions() {
                             setOptimizer(e.target.value)
                         }}
                     >
-                        {Object.keys(train).map((method) => (
+                        {Object.keys(OPTIMIZERS).map((method) => (
                             <MenuItem value={method} key={method}>
                                 {method}
                             </MenuItem>
@@ -37,26 +36,26 @@ export default function ModelOptions() {
                 </FormControl>
             </Row>
             <Row style={{ flexWrap: 'wrap', justifyContent: 'start' }}>
-                {learningAlgorithmOptions.map(([key, value]) => (
-                    <FormControl key={key} style={{ maxWidth: '50%' }}>
-                        <InputLabel id={key}>{key}</InputLabel>
-                        {typeof value === 'number' && (
+                {optimizer.parameters.map(({ name, type }) => (
+                    <FormControl key={name} style={{ maxWidth: '50%' }}>
+                        <InputLabel id={name}>{name}</InputLabel>
+                        {type === 'number' && (
                             <Input
-                                key={key}
+                                key={name}
                                 type="number"
-                                value={optimizerOptions[key]}
+                                value={optimizerOptions[name]}
                                 onInput={(e) => {
-                                    setOptimizerOption(key, e.target.valueAsNumber)
+                                    setOptimizerOption(name, e.target.valueAsNumber)
                                 }}
                             />
                         )}
-                        {typeof value === 'boolean' && (
+                        {type === 'boolean' && (
                             <Select
-                                value={optimizerOptions[key]}
-                                key={key}
-                                labelId={key}
+                                value={optimizerOptions[name]}
+                                key={name}
+                                labelId={name}
                                 onChange={(e) => {
-                                    setOptimizerOption(key, e.target.value)
+                                    setOptimizerOption(name, e.target.value)
                                 }}
                             >
                                 <MenuItem value={true}>True</MenuItem>

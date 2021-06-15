@@ -20,6 +20,8 @@ import {
     ACTIVATION_IDENTIFIRES,
     METRICS,
     LOSSES_FUNCTIONS,
+    OPTIMIZERS,
+    optimizerInfo,
 } from '../constants'
 
 import { Optimizer, Sequential, train } from '@tensorflow/tfjs'
@@ -27,11 +29,8 @@ import { useData } from './Data'
 import normalizeTensor from '../util/normalizeTensor'
 
 type ActivationIdentifier = typeof ACTIVATION_IDENTIFIRES[number]
-type OptimizerType = keyof typeof train
 type LossesType = typeof LOSSES_FUNCTIONS[number]
 type MetricType = typeof METRICS[number]
-
-type OptimizerConstructor = (...params: any) => Optimizer
 
 export interface ModelSettings {
     layers: {
@@ -40,7 +39,7 @@ export interface ModelSettings {
         activation?: ActivationIdentifier
         adjustable: boolean
     }[]
-    optimizer: OptimizerConstructor
+    optimizer: optimizerInfo
     optimizerOptions: any
     loss: LossesType
     metric: MetricType
@@ -49,13 +48,6 @@ export interface LearningSettings {
     batchSize: number
     epochs: number
     normalize: boolean
-}
-
-const defaultOptimizerOptions: {
-    [key: string]: number | boolean
-} = {
-    learningRate: 0.001,
-    momentum: 1,
 }
 
 const initialModelSettings: ModelSettings = {
@@ -79,7 +71,7 @@ const initialModelSettings: ModelSettings = {
             activation: 'linear',
         },
     ],
-    optimizer: train.sgd as unknown as OptimizerConstructor,
+    optimizer: OPTIMIZERS.sgd,
     optimizerOptions: {
         learningRate: 0.001,
     },
@@ -132,7 +124,7 @@ const TensorflowContext = createContext({
     setActivationFunction: (layerName: string, newValue: ActivationIdentifier) => {},
     stopTraining: () => {},
     setLearningOption: (option: { [k in keyof LearningSettings]?: LearningSettings[k] }) => {},
-    setOptimizer: (newOptimazer: OptimizerType) => {},
+    setOptimizer: (newOptimazer: string) => {},
     setOptimizerOption: (key: string, newValue: any) => {},
     setLoss: (newValue: LossesType) => {},
     setMetric: (newValue: MetricType) => {},
@@ -198,21 +190,12 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         })
     }
 
-    const setOptimizer = (newOptimizer: OptimizerType) => {
-        const optimizer = train[newOptimizer] as OptimizerConstructor
+    const setOptimizer = (newOptimizer: string) => {
+        const optimizer = OPTIMIZERS[newOptimizer]
         const optimizerOptions: {
             [k: string]: number | undefined | boolean
         } = Object.fromEntries(
-            getParamNames(optimizer).map(({ key, type, defaulValue: value }) => {
-                let defaultValue
-                if (!value) defaultValue = defaultOptimizerOptions[key]
-                else {
-                    if (type === 'boolean') defaultValue = value === 'true'
-                    if (type === 'number') defaultValue = parseFloat(value!)
-                }
-
-                return [key, defaultValue]
-            })
+            optimizer.parameters.map(({ name, defaultValue }) => [name, defaultValue])
         )
 
         setModelSettings((state) => ({
@@ -244,8 +227,8 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         })
 
         model.current.compile({
-            optimizer: optimizer(...Object.values(optimizerOptions)),
-            loss: tf.losses[loss] as any, // taka fcn jest w instrukcji
+            optimizer: optimizer.constructor(...Object.values(optimizerOptions)),
+            loss: tf.losses[loss] as any,
             metrics: tf.metrics[metric],
         })
 
@@ -371,10 +354,6 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         [learningData, learningSettings, modelSettings.metric]
     )
 
-    /**
-     * TODO: implement proper evaulation
-     * @returns evaulation results
-     */
     const evaulateData = useCallback(() => {
         const { inputs, labels } = evaluationData
         const { normalize } = learningSettings

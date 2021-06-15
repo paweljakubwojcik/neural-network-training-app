@@ -24,3 +24,4 @@ export const ACTIVATION_IDENTIFIRES = [
 
 export const LOSSES_FUNCTIONS = Object.keys(losses) as (keyof typeof losses)[]
 export const METRICS = Object.keys(metrics) as (keyof typeof metrics)[]
+export * from './optimizers'
