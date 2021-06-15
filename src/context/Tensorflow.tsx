@@ -296,11 +296,19 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                             onTrainBegin: onTrainBeginCallback,
                             onEpochEnd: async (epoch, logs) => {
                                 // object containing metric loss and validation loss for current epoch
+
+                                // because tensorflow uses hashed names for metrics like 'mse' => 'Hf' , so we have to find that name
+                                const currentMetricName = logs
+                                    ? Object.keys(logs).find(
+                                          (name) => !name.includes('loss') && !name.includes('val')
+                                      )
+                                    : 'loss'
+
                                 const currentTrainingLog = {
-                                    metric: { x: epoch, y: logs ? logs[modelSettings.metric] : 0 },
+                                    metric: { x: epoch, y: logs ? logs[`${currentMetricName}`] : 0 },
                                     val: {
                                         x: epoch,
-                                        y: logs ? logs[`val_${modelSettings.metric}`] : 0,
+                                        y: logs ? logs[`val_${currentMetricName}`] : 0,
                                     },
                                 }
 
@@ -314,7 +322,6 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                                         labelMax
                                     )
                                 const predictedArray = predictedTensor.arraySync() as number[][]
-                                console.log(predictedArray)
 
                                 const testArray = normalize
                                     ? (unNormalizeTensor(
@@ -331,6 +338,8 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                                         ...inputKeys.map((key, i) => [key, testArray[j][i]]),
                                     ])
                                 )
+
+                               /*  console.log(currentPrediction) */
 
                                 onEpochEndCallback(currentTrainingLog, currentPrediction)
                                 /* console.log(logs) */
