@@ -1,7 +1,7 @@
 {
   "files": {
-    "main.js": "/neural-network-training-app/static/js/main.9c1b244b.chunk.js",
-    "main.js.map": "/neural-network-training-app/static/js/main.9c1b244b.chunk.js.map",
+    "main.js": "/neural-network-training-app/static/js/main.338719db.chunk.js",
+    "main.js.map": "/neural-network-training-app/static/js/main.338719db.chunk.js.map",
     "runtime-main.js": "/neural-network-training-app/static/js/runtime-main.c0418f52.js",
     "runtime-main.js.map": "/neural-network-training-app/static/js/runtime-main.c0418f52.js.map",
     "static/js/2.3778af17.chunk.js": "/neural-network-training-app/static/js/2.3778af17.chunk.js",
@@ -12,6 +12,6 @@
   "entrypoints": [
     "static/js/runtime-main.c0418f52.js",
     "static/js/2.3778af17.chunk.js",
-    "static/js/main.9c1b244b.chunk.js"
+    "static/js/main.338719db.chunk.js"
   ]
 }
