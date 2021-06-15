@@ -1,6 +1,6 @@
 import React, { ChangeEvent, useState } from 'react'
 import { DataObject } from '../../context/Data'
-import mathFunctionGenerator, { paramMap } from '../../util/mathFunctionGenerator'
+import mathFunctionGenerator, { paramMap, defaults } from '../../util/mathFunctionGenerator'
 import { Button, ButtonGroup, TextField } from '@material-ui/core'
 import { Row, Column } from '../../components/Layout'
 
@@ -14,7 +14,7 @@ const FUNC = Object.keys(paramMap) as funcUnion[]
 
 export default function MathFunctionGenerator({ dataContext }: mathFunctionGeneratoProps) {
     const [func, setFunction] = useState<funcUnion>(FUNC[0])
-    const [params, setParams] = useState<{ [key: string]: number }>({})
+    const [params, setParams] = useState<{ [key: string]: number }>(defaults[FUNC[0]])
 
     return (
         <Column>
@@ -28,6 +28,7 @@ export default function MathFunctionGenerator({ dataContext }: mathFunctionGener
                         color="primary"
                         onClick={() => {
                             setFunction(value)
+                            setParams(defaults[value])
                         }}
                     >
                         {value}
@@ -37,10 +38,11 @@ export default function MathFunctionGenerator({ dataContext }: mathFunctionGener
             <Row>
                 {paramMap[func].map((param) => (
                     <TextField
+                        key={param}
                         id={param}
                         label={param}
                         type="number"
-                        value={params[param]}
+                        value={params[param].toString()}
                         onChange={(e: ChangeEvent<HTMLInputElement>) => {
                             setParams((prev) => ({ ...prev, [param]: e.target.valueAsNumber }))
                         }}
@@ -50,7 +52,6 @@ export default function MathFunctionGenerator({ dataContext }: mathFunctionGener
             <Button
                 onClick={() => {
                     const generated = mathFunctionGenerator[func](params as any)
-                    console.log(generated)
                     dataContext.addInput({ x: generated.map(({ x }) => x) })
                     dataContext.addLabel({ y: generated.map(({ y }) => y) })
                 }}

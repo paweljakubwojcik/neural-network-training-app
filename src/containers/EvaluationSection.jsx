@@ -24,7 +24,7 @@ export default function TrainingSection() {
         },
     } = useTheme()
 
-    console.log('render')
+    console.log(evaluationResults)
 
     return (
         <StyledCard>
@@ -61,12 +61,12 @@ export default function TrainingSection() {
                 <TextField
                     label={'metric loss loss'}
                     inputProps={{ readOnly: true }}
-                    defaultValue={evaluationResults.evaluation[0]}
+                    value={evaluationResults.evaluation[0].toString()}
                 />
                 <TextField
                     label={'validation loss'}
                     inputProps={{ readOnly: true }}
-                    defaultValue={evaluationResults.evaluation[1]}
+                    value={evaluationResults.evaluation[1].toString()}
                     variant="outlined"
                 />
             </Row>

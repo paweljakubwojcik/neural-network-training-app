@@ -88,7 +88,7 @@ const initialModelSettings: ModelSettings = {
 }
 
 type evaluationResults = {
-    evaluation: tf.Scalar | tf.Scalar[]
+    evaluation: number[]
     prediction: { [key: string]: number }[]
     error: { [key: string]: number }[]
 }
@@ -404,26 +404,11 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
         const testInput = learningInput.reshape([-1, inputs.keys.length])
         const testLabels = learningLabels.reshape([-1, labels.keys.length])
 
-        const evaluation = model.current.evaluate(testInput, testLabels)
+        const evaluation = (model.current.evaluate(testInput, testLabels) as tf.Scalar[]).map(
+            (tensor) => tensor.arraySync()
+        )
 
         // 2.get final prediction
-
-        /* const finalPrediction = model.current.predict(testInput) as tf.Tensor
-
-        const prediction = (finalPrediction.arraySync() as number[][]).map((y, j) =>
-            Object.fromEntries([
-                ...labels.keys.map((key, i) => [key, y[i]]),
-                ...inputs.keys.map((key, i) => [key, (testInput.arraySync() as number[][])[j][i]]),
-            ])
-        )
-        // 3.obtain error for every point
-        const errorTensor = finalPrediction.sub(testLabels)
-        const error = (errorTensor.arraySync() as number[][]).map((y, j) =>
-            Object.fromEntries([
-                ...labels.keys.map((key, i) => [key, y[i]]),
-                ...inputs.keys.map((key, i) => [key, (testInput.arraySync() as number[][])[j][i]]),
-            ])
-        ) */
 
         let finalPrediction = model.current.predict(testInput) as tf.Tensor
 
@@ -449,8 +434,6 @@ function TensorflowProvider({ children }: { children: ReactNode }) {
                 ...inputs.keys.map((key, i) => [key, testArray[j][i]]),
             ])
         )
-
-        console.log({ evaluation, prediction, error })
 
         return { evaluation, prediction, error }
     }, [evaluationData, learningSettings])

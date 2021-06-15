@@ -100,4 +100,38 @@ export const paramMap = {
     gauss: ['a', 'sigma'].concat(defaultParams),
 }
 
+export const defaults = {
+    linear: {
+        a: 1,
+        b: 1,
+        noise: 0,
+        min: DEFAULT_MIN,
+        max: DEFAULT_MAX,
+        length: DEFAULT_LENGTH,
+    },
+    exp: {
+        a: Math.E,
+        noise: 0,
+        min: DEFAULT_MIN,
+        max: DEFAULT_MAX,
+        length: DEFAULT_LENGTH,
+    },
+    sin: {
+        a: 1,
+        w: 25,
+        noise: 0,
+        min: DEFAULT_MIN,
+        max: DEFAULT_MAX,
+        length: DEFAULT_LENGTH,
+    },
+    gauss: {
+        a: 10,
+        sigma: 3,
+        noise: 0,
+        min: DEFAULT_MIN,
+        max: DEFAULT_MAX,
+        length: DEFAULT_LENGTH,
+    },
+}
+
 export default mathFunctionGenerator
